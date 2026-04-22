@@ -60,7 +60,7 @@ export default async function AdminDashboard() {
               {recentOrders.map((o) => (
                 <tr key={o.id}>
                   <td>{o.createdAt.toLocaleDateString()}</td>
-                  <td>{o.customer.email}</td>
+                  <td>{o.customer?.email ?? o.guestEmail ?? 'Guest'}</td>
                   <td>{o.status.toLowerCase()}</td>
                   <td className="admin-table__right">€{(o.totalCents / 100).toFixed(2)}</td>
                 </tr>

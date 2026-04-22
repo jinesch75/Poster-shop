@@ -10,6 +10,8 @@ import {
   getPublishedPosterSlugs,
   getRelatedPosters,
 } from '@/lib/posters';
+import { startCheckoutForPoster } from '@/app/actions/checkout';
+import { stripeConfigured } from '@/lib/stripe';
 
 // Regenerate product pages when content changes; don't force dynamic
 // rendering since posters don't change on every request.
@@ -121,15 +123,25 @@ export default async function ProductPage({
               <div className="total-value">€{poster.priceEur}.00</div>
             </div>
 
-            <div className="buy-row">
+            <form action={startCheckoutForPoster} className="buy-row">
+              <input type="hidden" name="slug" value={poster.slug} />
               <button
+                type="submit"
                 className="btn-full"
-                disabled
-                title="Checkout wiring arrives in Session 4"
+                disabled={!stripeConfigured()}
+                title={
+                  stripeConfigured()
+                    ? 'Pay securely with Stripe — download delivered immediately'
+                    : 'Checkout is temporarily unavailable. Please try again shortly.'
+                }
               >
                 Add to cart · download now
               </button>
-              <button className="btn-icon" aria-label="Save">
+              <button
+                type="button"
+                className="btn-icon"
+                aria-label="Save"
+              >
                 <svg
                   width="18"
                   height="18"
@@ -141,7 +153,7 @@ export default async function ProductPage({
                   <path d="M6 3h12v18l-6-4-6 4z" />
                 </svg>
               </button>
-            </div>
+            </form>
           </div>
         </div>
 

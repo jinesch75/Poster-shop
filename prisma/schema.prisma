@@ -133,19 +133,28 @@ model Customer {
   updatedAt        DateTime @updatedAt
 }
 
+// An order is created at Checkout-session creation time in PENDING state.
+// The Stripe webhook flips it to PAID and the per-item download tokens
+// get minted at that moment. Guest checkout is allowed: customerId links
+// to a Customer upserted in the webhook handler from Stripe's email.
 model Order {
-  id                String      @id @default(cuid())
-  customer          Customer    @relation(fields: [customerId], references: [id])
-  customerId        String
-  stripeSessionId   String?     @unique
-  status            OrderStatus @default(PENDING)
-  totalCents        Int
-  currency          String      @default("eur")
-  items             OrderItem[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id                     String      @id @default(cuid())
+  customer               Customer?   @relation(fields: [customerId], references: [id])
+  customerId             String?
+  // Copied from Stripe Checkout for display on the success page when we
+  // can't rely on a session cookie (user returns via email link, etc.)
+  guestEmail             String?
+  stripeSessionId        String?     @unique
+  stripePaymentIntentId  String?     @unique
+  status                 OrderStatus @default(PENDING)
+  totalCents             Int
+  currency               String      @default("eur")
+  items                  OrderItem[]
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
 
   @@index([customerId, createdAt])
+  @@index([stripeSessionId])
 }
 
 enum OrderStatus {
