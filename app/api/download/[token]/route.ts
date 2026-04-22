@@ -15,7 +15,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
-import { readStream } from '@/lib/storage';
+import { readBuffer } from '@/lib/storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -63,8 +63,30 @@ export async function GET(
     return badToken('Download limit reached for this item', 429);
   }
 
+  // Read the master file first, THEN increment the count. Earlier we
+  // incremented before reading, which meant failed reads still burned a
+  // download credit — a bad experience during bugs. Masters are a few MB,
+  // buffering them is fine on Railway; we can revisit if we ever ship
+  // very large files (>50MB) and need true streaming.
+  const key = item.poster.masterKey;
+  const ext = path.extname(key).toLowerCase();
+  const mime = MIME[ext] ?? 'application/octet-stream';
+  const filename = `${item.poster.slug}${ext || '.png'}`;
+
+  let buffer: Buffer;
+  try {
+    buffer = await readBuffer(key);
+  } catch (err) {
+    console.error('[download] readBuffer failed for key', key, err);
+    return NextResponse.json(
+      { error: 'Master file is unavailable' },
+      { status: 500 },
+    );
+  }
+
   // Atomic increment with a guard on the current count — prevents two
-  // simultaneous requests from racing past the limit.
+  // simultaneous requests from racing past the limit. Doing this AFTER
+  // the read means a failed read doesn't cost the buyer a credit.
   const updated = await prisma.orderItem.updateMany({
     where: {
       id: item.id,
@@ -78,25 +100,11 @@ export async function GET(
     return badToken('Download limit reached for this item', 429);
   }
 
-  // Stream the master file. We don't pre-buffer — posters are big.
-  const key = item.poster.masterKey;
-  const ext = path.extname(key).toLowerCase();
-  const mime = MIME[ext] ?? 'application/octet-stream';
-  const filename = `${item.poster.slug}${ext || '.png'}`;
-
-  // readStream handles both volume-backed keys and legacy "public:" keys
-  // (the seed data uses public: keys because the admin-upload flow hasn't
-  // replaced them yet). If the file itself is missing, the stream will
-  // emit an error and the client gets a truncated response — acceptable
-  // for now; we'll surface it more cleanly once R2 is in.
-  const { Readable } = await import('stream');
-  const nodeStream = readStream(key);
-  const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
-
-  return new NextResponse(webStream, {
+  return new NextResponse(new Uint8Array(buffer), {
     status: 200,
     headers: {
       'Content-Type': mime,
+      'Content-Length': String(buffer.length),
       'Content-Disposition': `attachment; filename="${filename}"`,
       'Cache-Control': 'private, no-store',
     },
