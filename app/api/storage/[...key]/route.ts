@@ -41,7 +41,10 @@ export async function GET(
     const buffer = await readBuffer(key);
     const ext = path.extname(key).toLowerCase();
     const mime = MIME[ext] ?? 'application/octet-stream';
-    return new NextResponse(buffer, {
+    // Convert Node Buffer to a plain Uint8Array — NextResponse's BodyInit
+    // type rejects Buffer<ArrayBufferLike> from newer @types/node.
+    const body = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    return new NextResponse(body, {
       status: 200,
       headers: {
         'Content-Type': mime,

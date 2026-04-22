@@ -4,7 +4,7 @@
 // at any scale — no bitmap logo needed in v1.
 
 import sharp from 'sharp';
-import { putBuffer, readBuffer, StorageKind } from './storage';
+import { putBuffer, readBuffer } from './storage';
 import path from 'path';
 import { promises as fs } from 'fs';
 
@@ -251,5 +251,3 @@ export async function reprocessMaster(masterKey: string): Promise<PosterDerivati
   };
 }
 
-// Silence the unused-var warning for StorageKind (exported for callers)
-export type { StorageKind };
