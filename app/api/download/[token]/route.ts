@@ -15,7 +15,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
-import { resolveKey, readStream } from '@/lib/storage';
+import { readStream } from '@/lib/storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -84,19 +84,11 @@ export async function GET(
   const mime = MIME[ext] ?? 'application/octet-stream';
   const filename = `${item.poster.slug}${ext || '.png'}`;
 
-  // resolveKey throws for "public:" keys — masters always live on the
-  // private volume so this shouldn't happen, but fail closed just in case.
-  try {
-    resolveKey(key);
-  } catch {
-    return NextResponse.json(
-      { error: 'Master file is not downloadable' },
-      { status: 500 },
-    );
-  }
-
-  // Node's ReadStream is a Readable; Web ReadableStream is what Response
-  // expects. `Readable.toWeb` bridges them.
+  // readStream handles both volume-backed keys and legacy "public:" keys
+  // (the seed data uses public: keys because the admin-upload flow hasn't
+  // replaced them yet). If the file itself is missing, the stream will
+  // emit an error and the client gets a truncated response — acceptable
+  // for now; we'll surface it more cleanly once R2 is in.
   const { Readable } = await import('stream');
   const nodeStream = readStream(key);
   const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
