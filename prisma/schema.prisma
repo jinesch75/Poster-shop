@@ -1,0 +1,189 @@
+// Linework Studio — Prisma schema
+// Session 2: models for the full v1 surface.
+// Print-related fields on Poster/PosterSize are present but unused in v1
+// (digital-only). They're here so v2 print support is additive, not a migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Catalog ----------
+
+model City {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  number      String   // "01", "02" — displayed as N°01 in UI
+  description String?
+  heroImage   String?  // storage key for city hero image
+  status      CityStatus @default(PLANNED)
+  statusLabel String?  // e.g. "Summer 2026", shown when not AVAILABLE
+  posters     Poster[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum CityStatus {
+  AVAILABLE
+  IN_PROGRESS
+  PLANNED
+}
+
+model Poster {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  number          String        // "N°01"
+  description     String
+  landmarkType    String?       // "tower", "bridge", "street furniture", ...
+  orientation     Orientation   @default(PORTRAIT)
+
+  // Storage keys (opaque — resolved through lib/storage.ts).
+  // Master is private; the rest are public.
+  masterKey       String        // private high-res original
+  previewKey      String?       // ~2400px watermarked
+  thumbnailKey    String?       // ~800px watermarked
+  mockupOfficeKey String?       // room composite
+  mockupLivingKey String?       // room composite
+
+  masterWidthPx   Int
+  masterHeightPx  Int
+
+  priceDigitalCents Int         @default(500) // €5.00
+
+  status          PosterStatus  @default(DRAFT)
+
+  city            City          @relation(fields: [cityId], references: [id])
+  cityId          String
+
+  sizes           PosterSize[]  // v2: print sizes via Gelato
+  orderItems      OrderItem[]
+  bundleLinks     BundleItem[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([cityId, status])
+}
+
+enum Orientation {
+  PORTRAIT
+  LANDSCAPE
+  SQUARE
+}
+
+enum PosterStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// v2: physical print variants. Not used in v1 but kept so v2 is additive.
+model PosterSize {
+  id              String  @id @default(cuid())
+  poster          Poster  @relation(fields: [posterId], references: [id], onDelete: Cascade)
+  posterId        String
+  sizeCode        String  // "A4" | "A3" | "A2"
+  printPriceCents Int
+  gelatoProductId String?
+
+  @@unique([posterId, sizeCode])
+}
+
+// ---------- Bundles (curated 5-packs) ----------
+
+model Bundle {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  title       String
+  description String?
+  priceCents  Int          @default(2000) // €20.00
+  coverKey    String?
+  status      PosterStatus @default(DRAFT)
+  items       BundleItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model BundleItem {
+  bundle    Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  bundleId  String
+  poster    Poster @relation(fields: [posterId], references: [id])
+  posterId  String
+  position  Int    @default(0)
+
+  @@id([bundleId, posterId])
+}
+
+// ---------- Customers & orders ----------
+
+model Customer {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String?
+  stripeCustomerId String?  @unique
+  orders           Order[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  customer          Customer    @relation(fields: [customerId], references: [id])
+  customerId        String
+  stripeSessionId   String?     @unique
+  status            OrderStatus @default(PENDING)
+  totalCents        Int
+  currency          String      @default("eur")
+  items             OrderItem[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([customerId, createdAt])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  REFUNDED
+  CANCELLED
+}
+
+model OrderItem {
+  id                  String       @id @default(cuid())
+  order               Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId             String
+  poster              Poster?      @relation(fields: [posterId], references: [id])
+  posterId            String?
+  bundle              Bundle?      @relation(fields: [bundleId], references: [id])
+  bundleId            String?
+  kind                ItemKind     @default(DIGITAL)
+  sizeCode            String?      // v2: "A4" | "A3" | "A2" for print
+  priceCents          Int
+  downloadToken       String?      @unique
+  downloadExpiresAt   DateTime?
+  downloadCount       Int          @default(0)
+  createdAt           DateTime     @default(now())
+}
+
+enum ItemKind {
+  DIGITAL
+  PRINT
+}
+
+// ---------- Newsletter ----------
+
+model Subscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  discountCode String?
+  source       String?  // "launch-modal", "footer", etc.
+  createdAt    DateTime @default(now())
+}

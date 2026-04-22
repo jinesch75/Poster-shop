@@ -42,3 +42,6 @@ next-env.d.ts
 # editor
 .vscode/
 .idea/
+
+# local uploads (dev only — Railway uses /data/linework volume in prod)
+/uploads/

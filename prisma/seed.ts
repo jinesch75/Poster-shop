@@ -1,0 +1,177 @@
+// Seed the DB with the initial cities + the 8-poster London set.
+// Idempotent: run as many times as you like (upserts by slug).
+//
+// Storage keys here point at the public/posters/*.png files checked into
+// the repo. When the admin panel uploads a new poster, it writes to the
+// Railway volume via lib/storage and updates the DB with the new keys.
+// These seed rows keep the legacy public-bucket paths for development.
+//
+// Run: npm run db:seed
+
+import { PrismaClient, CityStatus, PosterStatus } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+type CitySeed = {
+  slug: string;
+  name: string;
+  number: string;
+  status: CityStatus;
+  statusLabel: string | null;
+  description?: string;
+};
+
+const cities: CitySeed[] = [
+  {
+    slug: 'london',
+    name: 'London',
+    number: '01',
+    status: CityStatus.AVAILABLE,
+    statusLabel: 'Available',
+    description: 'The first city in the series. Eight posters, drawn across Westminster, the South Bank, and the City.',
+  },
+  { slug: 'paris', name: 'Paris', number: '02', status: CityStatus.IN_PROGRESS, statusLabel: 'Summer 2026' },
+  { slug: 'rome', name: 'Rome', number: '03', status: CityStatus.PLANNED, statusLabel: 'Autumn 2026' },
+  { slug: 'new-york', name: 'New York', number: '04', status: CityStatus.PLANNED, statusLabel: 'Winter 2026' },
+  { slug: 'tokyo', name: 'Tokyo', number: '05', status: CityStatus.PLANNED, statusLabel: '2027' },
+];
+
+type PosterSeed = {
+  slug: string;
+  title: string;
+  number: string;
+  description: string;
+  file: string; // public path during development; real admin uploads replace this
+};
+
+const londonPosters: PosterSeed[] = [
+  {
+    slug: 'westminster-primary',
+    title: 'Westminster Primary',
+    number: 'N°01',
+    file: '/posters/big-ben.png',
+    description:
+      "The Elizabeth Tower rendered in draughtsman's line and overlaid with a De Stijl composition of primary blocks.",
+  },
+  {
+    slug: 'south-bank',
+    title: 'South Bank',
+    number: 'N°02',
+    file: '/posters/london-eye.png',
+    description:
+      'The London Eye turning against the river, pinned to a composition of yellow, red, and blue planes.',
+  },
+  {
+    slug: 'tower-bridge',
+    title: 'Tower Bridge',
+    number: 'N°03',
+    file: '/posters/tower-bridge.png',
+    description:
+      'Twin Gothic towers against the Thames — architectural linework and primary-color blocks.',
+  },
+  {
+    slug: 'st-pauls',
+    title: "St Paul's",
+    number: 'N°04',
+    file: '/posters/st-pauls.png',
+    description:
+      "Wren's dome holding the centre of the composition, anchored by blocks of colour.",
+  },
+  {
+    slug: 'the-shard',
+    title: 'The Shard',
+    number: 'N°05',
+    file: '/posters/the-shard.png',
+    description:
+      "Renzo Piano's glass tower rendered as line and refracted through the Mondrian palette.",
+  },
+  {
+    slug: 'kiosk-k2',
+    title: 'Kiosk K2',
+    number: 'N°06',
+    file: '/posters/telephone-box.png',
+    description:
+      'The iconic red telephone box, framed against a quiet streetscape of Westminster.',
+  },
+  {
+    slug: 'westminster-abbey',
+    title: 'Westminster Abbey',
+    number: 'N°07',
+    file: '/posters/westminster-abbey.png',
+    description:
+      'Gothic architecture abstracted into linework and block — eight centuries of stone in four colours.',
+  },
+  {
+    slug: 'the-riverline',
+    title: 'The Riverline',
+    number: 'N°08',
+    file: '/posters/big-ben-london-eye.png',
+    description:
+      'Big Ben and the London Eye held together by the Thames — a panoramic composition in primaries.',
+  },
+];
+
+async function main() {
+  console.log('Seeding cities...');
+  for (const c of cities) {
+    await prisma.city.upsert({
+      where: { slug: c.slug },
+      create: {
+        slug: c.slug,
+        name: c.name,
+        number: c.number,
+        status: c.status,
+        statusLabel: c.statusLabel,
+        description: c.description,
+      },
+      update: {
+        name: c.name,
+        number: c.number,
+        status: c.status,
+        statusLabel: c.statusLabel,
+        description: c.description,
+      },
+    });
+  }
+
+  const london = await prisma.city.findUniqueOrThrow({ where: { slug: 'london' } });
+
+  console.log('Seeding London posters...');
+  for (const p of londonPosters) {
+    await prisma.poster.upsert({
+      where: { slug: p.slug },
+      create: {
+        slug: p.slug,
+        title: p.title,
+        number: p.number,
+        description: p.description,
+        // Point all three keys at the public file during development.
+        // The admin upload flow replaces these with volume-backed keys.
+        masterKey: `public:${p.file}`,
+        previewKey: `public:${p.file}`,
+        thumbnailKey: `public:${p.file}`,
+        masterWidthPx: 1856,
+        masterHeightPx: 2464,
+        priceDigitalCents: 500,
+        status: PosterStatus.PUBLISHED,
+        cityId: london.id,
+      },
+      update: {
+        title: p.title,
+        number: p.number,
+        description: p.description,
+      },
+    });
+  }
+
+  console.log('Seed complete.');
+}
+
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

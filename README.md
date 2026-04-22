@@ -4,34 +4,44 @@ Online shop for architectural posters in a De Stijl / Piet Mondrian-inspired sty
 
 ---
 
-## What's in this scaffold (Session 1)
+## What's in this scaffold
 
+**Session 1**
 - Next.js 15 + TypeScript + App Router
-- Outfit (display) + Manrope (body) loaded via `next/font`
-- Full design system in `app/globals.css` (tokens, typography, components)
-- Fully-rendered homepage at `/` with all eight London posters
-- Basic product detail page at `/shop/[slug]` (static; checkout wires up in Session 4)
-- Watermark overlay component applied to every poster preview
+- Outfit (display) + Manrope (body) via `next/font`
+- Full design system in `app/globals.css`
+- Homepage + basic product detail page with the 8-poster London set
 
-Still to come (see `PROJECT_PLAN.md` in the parent folder):
-- Session 2 — Postgres schema via Prisma + admin panel upload flow with server-side watermark pipeline
-- Session 3 — Polish the product detail page, bundles, city index pages
-- Session 4 — Stripe Checkout, customer accounts (Auth.js magic links), signed-URL download flow
-- Session 5 — Plausible analytics, Resend newsletter, legal pages, Railway deploy, custom domain
+**Session 2 (this commit)**
+- Prisma + Postgres schema covering cities, posters, bundles, customers, orders, subscribers
+- Storage abstraction at `lib/storage.ts` — Railway volume in prod, `./uploads` locally
+- Streaming route at `/api/storage/[...key]` (masters blocked until signed URLs in Session 4)
+- Sharp-based watermark pipeline at `lib/watermark.ts` — one master → private copy + thumbnail + preview (diagonal "LINEWORK · STUDIO" overlay) + two room mockups
+- Admin panel at `/admin` gated by `ADMIN_PASSWORD` env var (signed JWT cookie via `jose`, edge-safe middleware)
+- Admin screens: dashboard, posters list/new/edit, cities editor
+- Seed script at `prisma/seed.ts` ports the 8 London posters into the DB
+
+**Still to come**
+- Session 3 — rewire public site to read from Postgres, bundles, city index pages
+- Session 4 — Stripe Checkout, Auth.js magic links, signed-URL download flow (48h / 5 downloads)
+- Session 5 — Plausible, Resend newsletter, legal pages, custom domain
 
 ---
 
 ## Run it locally
 
+Requires Node.js 20+ and a Postgres instance (Docker works: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:16`).
+
 ```bash
 cd linework-studio
+cp .env.example .env.local   # then edit DATABASE_URL, AUTH_SECRET, ADMIN_PASSWORD
 npm install
+npm run db:push              # creates tables from prisma/schema.prisma
+npm run db:seed              # loads the 8 London posters
 npm run dev
 ```
 
-Then open http://localhost:3000.
-
-Requires Node.js 20+.
+Then open http://localhost:3000 (public site) or http://localhost:3000/admin (admin login — use `ADMIN_PASSWORD` from `.env.local`).
 
 ---
 
