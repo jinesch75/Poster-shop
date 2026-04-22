@@ -2,29 +2,28 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PosterCard } from '@/components/PosterCard';
 import { Watermark } from '@/components/Watermark';
-import { posters, featuredPoster, cities } from '@/lib/posters';
+import { Nav } from '@/components/Nav';
+import { Footer } from '@/components/Footer';
+import { NewsletterForm } from '@/components/NewsletterForm';
+import {
+  getPublishedPosters,
+  getCities,
+  getHeroPosterView,
+} from '@/lib/posters';
 
-export default function HomePage() {
+// Always fresh — content can change in the admin panel.
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+  const [hero, posters, cities] = await Promise.all([
+    getHeroPosterView(),
+    getPublishedPosters(),
+    getCities(),
+  ]);
+
   return (
     <>
-      {/* ============ NAV ============ */}
-      <nav className="top">
-        <div className="wordmark">
-          Linework <span className="studio-sub">Studio</span>
-        </div>
-        <div className="links">
-          <Link href="#shop">Shop</Link>
-          <Link href="#cities">Cities</Link>
-          <Link href="#about">About</Link>
-          <Link href="#journal">Journal</Link>
-        </div>
-        <div className="right">
-          <Link href="/account">Account</Link>
-          <Link href="/cart" className="cart">
-            Cart <span className="badge">0</span>
-          </Link>
-        </div>
-      </nav>
+      <Nav />
 
       {/* ============ HERO ============ */}
       <section className="hero">
@@ -34,48 +33,51 @@ export default function HomePage() {
             <span className="italic">primary colors.</span>
           </h1>
           <p className="lede">
-            Original architectural posters — where the draftsman&apos;s line
-            meets the De&nbsp;Stijl palette. High-resolution digital downloads,
-            ready to print at A4 from any home or local print shop. €5 for a
-            single poster, €20 for any five.
+            Architectural posters where line meets the De&nbsp;Stijl palette.
+            High-resolution digital downloads, ready to print at A4 from any
+            home or local print shop. €5 for a single poster, €20 for any five.
           </p>
           <div className="cta-row">
-            <Link className="btn-primary" href="#shop">
+            <Link className="btn-primary" href="/shop">
               Browse the London series
               <svg className="arrow" width="16" height="12" viewBox="0 0 16 12" fill="none">
                 <path d="M1 6h14M10 1l5 5-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
               </svg>
             </Link>
-            <Link className="btn-ghost" href="#about">Read the process</Link>
+            <Link className="btn-ghost" href="#about">About the work</Link>
           </div>
         </div>
 
-        <div className="featured">
-          <div style={{ position: 'relative' }}>
-            <span className="tick tr">Featured. {featuredPoster.number}</span>
-            <span className="tick bl">PNG + PDF · €5</span>
-            <div className="frame">
-              <Image
-                src={featuredPoster.file}
-                alt={featuredPoster.title}
-                width={900}
-                height={1200}
-                priority
-                sizes="(max-width: 900px) 100vw, 40vw"
-              />
-              <Watermark lines={9} fontSize={14} />
-            </div>
-          </div>
-          <div className="caption">
-            <div>
-              <div className="title">{featuredPoster.title}</div>
-              <div className="mono-label" style={{ marginTop: 4 }}>
-                {featuredPoster.city} · {featuredPoster.number}
+        {hero && (
+          <div className="featured">
+            <div style={{ position: 'relative' }}>
+              <span className="tick tr">Featured. {hero.number}</span>
+              <span className="tick bl">PNG + PDF · €{hero.priceEur}</span>
+              <div className="frame">
+                <Image
+                  src={hero.file}
+                  alt={hero.title}
+                  width={900}
+                  height={1200}
+                  priority
+                  sizes="(max-width: 900px) 100vw, 40vw"
+                />
+                <Watermark lines={9} fontSize={14} />
               </div>
             </div>
-            <div className="price">from €{featuredPoster.priceEur}</div>
+            <div className="caption">
+              <div>
+                <Link href={`/shop/${hero.slug}`} className="title">
+                  {hero.title}
+                </Link>
+                <div className="mono-label" style={{ marginTop: 4 }}>
+                  {hero.city} · {hero.number}
+                </div>
+              </div>
+              <div className="price">from €{hero.priceEur}</div>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* ============ GALLERY ============ */}
@@ -83,7 +85,7 @@ export default function HomePage() {
         <div className="section-header">
           <div className="eyebrow">
             <span className="num">N°01</span>
-            <span className="mono-label">Working from London — Spring 2026</span>
+            <span className="mono-label">The London series — Spring 2026</span>
           </div>
           <div className="inner-row">
             <h2 className="title">
@@ -104,7 +106,7 @@ export default function HomePage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, marginTop: 64 }}>
-          <Link className="btn-ghost" href="/shop">View the full London collection</Link>
+          <Link className="btn-ghost" href="/shop">View the full catalogue</Link>
           <p className="gallery-wm-note">
             Preview images carry a diagonal watermark. Downloads are delivered clean and unmarked.
           </p>
@@ -123,26 +125,41 @@ export default function HomePage() {
               One city at a <span className="italic">time.</span>
             </h2>
             <p className="aside">
-              A slow catalogue. Each city takes three months — research,
-              sketching, layering, release. Subscribe to be notified when
-              the next one goes up.
+              A slow catalogue. Each capital gets its own series — same line,
+              same palette, different architecture. Subscribe to be notified
+              when the next one goes up.
             </p>
           </div>
         </div>
 
         <div className="cities">
-          {cities.map((city) => (
-            <div key={city.slug} className={`city-row ${city.status === 'available' ? '' : 'soon'}`}>
-              <span className="num">{city.number}</span>
-              <span className="name">{city.name}</span>
-              <span className="count">
-                {city.posterCount > 0 ? `${String(city.posterCount).padStart(2, '0')} posters` : city.status === 'in-progress' ? 'In progress' : '—'}
-              </span>
-              <span className="status" style={city.status === 'available' ? { color: 'var(--ink)' } : undefined}>
-                {city.statusLabel}
-              </span>
-            </div>
-          ))}
+          {cities.map((city) => {
+            const available = city.status === 'AVAILABLE';
+            return (
+              <Link
+                key={city.slug}
+                href={available ? `/city/${city.slug}` : '#'}
+                className={`city-row ${available ? '' : 'soon'}`}
+                aria-disabled={!available}
+              >
+                <span className="num">{city.number}</span>
+                <span className="name">{city.name}</span>
+                <span className="count">
+                  {city.posterCount > 0
+                    ? `${String(city.posterCount).padStart(2, '0')} posters`
+                    : city.status === 'IN_PROGRESS'
+                      ? 'In progress'
+                      : '—'}
+                </span>
+                <span
+                  className="status"
+                  style={available ? { color: 'var(--ink)' } : undefined}
+                >
+                  {city.statusLabel}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -158,9 +175,8 @@ export default function HomePage() {
               On the <span className="italic">wall.</span>
             </h2>
             <p className="aside">
-              Every poster is auto-composited into an office and a
-              residential setting so you can see the scale and colour
-              before you commit.
+              Every poster is composited into an office and a residential
+              setting so you can see the scale and colour before you commit.
             </p>
           </div>
         </div>
@@ -181,30 +197,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ ABOUT / MANIFESTO ============ */}
+      {/* ============ ABOUT THE WORK ============ */}
       <section className="section" id="about">
         <div className="section-header">
           <div className="eyebrow">
             <span className="num">N°04</span>
-            <span className="mono-label">Process — a short note</span>
+            <span className="mono-label">About the work</span>
           </div>
           <div className="inner-row">
             <h2 className="title">
-              Why <span className="italic">primaries?</span>
+              Architecture, seen through a{' '}
+              <span className="italic">De&nbsp;Stijl lens.</span>
             </h2>
           </div>
         </div>
 
         <div className="manifesto">
           <p className="big-q">
-            &ldquo;I draw the city the way a structural engineer would —
-            hairlines, vanishing points, brickwork. Then I invite Piet
-            Mondrian in. He brings red, yellow, and blue, and suddenly
-            the building is also a <span className="italic">painting.</span>&rdquo;
+            Each poster takes a city&apos;s most-drawn landmarks — towers,
+            bridges, corners, street furniture — and reduces them to the
+            essentials: a clean line drawing, the three primary colors, a
+            white ground. It&apos;s the conversation Mondrian never got to
+            have with a cathedral or a bridge: geometry meeting geometry,
+            the building offering its structure, the palette answering with{' '}
+            <span className="italic">red, yellow, and blue.</span> A quiet
+            collection for people who love cities and modernist design in
+            roughly equal measure.
           </p>
           <div className="sig">
             <span className="line"></span>
-            <span>Jacques, founder</span>
+            <span>Linework Studio · Luxembourg</span>
           </div>
         </div>
       </section>
@@ -219,59 +241,13 @@ export default function HomePage() {
             <p className="note">One email when a new city drops. No sales, no fluff.</p>
           </div>
           <div>
-            <form>
-              <input type="email" placeholder="your@email.com" required aria-label="Email address" />
-              <button type="submit">
-                Subscribe
-                <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                  <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-              </button>
-            </form>
+            <NewsletterForm source="home-journal" />
             <div className="small">Unsubscribe anytime · GDPR compliant · No spam, ever.</div>
           </div>
         </div>
       </section>
 
-      {/* ============ FOOTER ============ */}
-      <footer>
-        <div className="cols">
-          <div className="mark">
-            Linework <span className="studio-sub">Studio</span>
-            <small>Architectural posters. Brussels.</small>
-          </div>
-          <div className="col">
-            <h4>Shop</h4>
-            <ul>
-              <li>All posters</li>
-              <li>London</li>
-              <li>Bundles</li>
-              <li>Gift cards</li>
-            </ul>
-          </div>
-          <div className="col">
-            <h4>Studio</h4>
-            <ul>
-              <li>About</li>
-              <li>Process</li>
-              <li>Commissions</li>
-              <li>For offices</li>
-            </ul>
-          </div>
-          <div className="col">
-            <h4>Help</h4>
-            <ul>
-              <li>Licence info</li>
-              <li>Contact</li>
-              <li>FAQ</li>
-            </ul>
-          </div>
-        </div>
-        <div className="bottom">
-          <span>© 2026 Linework Studio · Brussels, Belgium</span>
-          <span>Terms · Privacy · Imprint</span>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }

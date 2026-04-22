@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { processMaster } from '@/lib/watermark';
+import { PosterUploadSchema, firstError } from '@/lib/validation';
 
 export const metadata = { title: 'Upload poster — Linework Studio Admin' };
 export const dynamic = 'force-dynamic';
@@ -18,32 +19,47 @@ function slugify(input: string): string {
 async function createPoster(formData: FormData) {
   'use server';
 
-  const title = String(formData.get('title') ?? '').trim();
-  const number = String(formData.get('number') ?? '').trim() || 'N°?';
-  const description = String(formData.get('description') ?? '').trim();
-  const cityId = String(formData.get('cityId') ?? '');
-  const priceEur = Number(formData.get('priceEur') ?? 5);
-  const publish = formData.get('publish') === 'on';
-  const file = formData.get('file') as File | null;
+  const parsed = PosterUploadSchema.safeParse({
+    title: formData.get('title'),
+    number: formData.get('number') || undefined,
+    description: formData.get('description'),
+    cityId: formData.get('cityId'),
+    priceEur: formData.get('priceEur'),
+    publish: formData.get('publish') ?? '',
+    landmarkType: formData.get('landmarkType') || undefined,
+  });
 
-  if (!title || !description || !cityId || !file || file.size === 0) {
-    throw new Error('Missing required fields');
+  if (!parsed.success) {
+    throw new Error(firstError(parsed) ?? 'Invalid input');
   }
+
+  const file = formData.get('file') as File | null;
+  if (!file || file.size === 0) {
+    throw new Error('A master image file is required.');
+  }
+  // Reject anything larger than 50MB — matches next.config.mjs bodySizeLimit.
+  if (file.size > 50 * 1024 * 1024) {
+    throw new Error('Master image is over the 50MB limit.');
+  }
+  if (!['image/png', 'image/jpeg'].includes(file.type)) {
+    throw new Error('Only PNG or JPEG master files are accepted.');
+  }
+
+  const { title, number, description, cityId, priceEur, publish, landmarkType } =
+    parsed.data;
 
   const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
   const buffer = Buffer.from(await file.arrayBuffer());
-
   const derivatives = await processMaster(buffer, ext);
-
-  const slug = slugify(title);
 
   await prisma.poster.create({
     data: {
-      slug,
+      slug: slugify(title),
       title,
       number,
       description,
       cityId,
+      landmarkType,
       masterKey: derivatives.masterKey,
       previewKey: derivatives.previewKey,
       thumbnailKey: derivatives.thumbnailKey,
@@ -111,6 +127,15 @@ export default async function AdminNewPosterPage() {
             <input name="priceEur" type="number" min={1} step={1} defaultValue={5} />
           </label>
         </div>
+
+        <label>
+          <span>Landmark type (optional — for shop filters)</span>
+          <input
+            name="landmarkType"
+            type="text"
+            placeholder="e.g. tower, bridge, street furniture"
+          />
+        </label>
 
         <label>
           <span>Master image (PNG or JPG, 4000px+ on long edge recommended)</span>

@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Poster } from '@/lib/posters';
+import type { PosterView } from '@/lib/posters';
 import { Watermark } from './Watermark';
 
-export function PosterCard({ poster }: { poster: Poster }) {
+export function PosterCard({ poster }: { poster: PosterView }) {
   return (
     <Link href={`/shop/${poster.slug}`} className="card">
       <div className="thumb">

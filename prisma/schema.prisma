@@ -187,3 +187,16 @@ model Subscriber {
   source       String?  // "launch-modal", "footer", etc.
   createdAt    DateTime @default(now())
 }
+
+// ---------- Site settings ----------
+//
+// Single-row settings table — always use id="singleton". Accessed via
+// lib/settings.ts which upserts on write and falls back gracefully on read.
+// Keeping it as a real table (vs. env vars) means content editors can change
+// things through the admin panel without a redeploy.
+
+model SiteSetting {
+  id             String   @id @default("singleton")
+  heroPosterId   String?  // points at Poster.id — the featured poster on the home page
+  updatedAt      DateTime @updatedAt
+}
