@@ -75,6 +75,14 @@ export async function createCheckoutForPoster(
     ? [absoluteUrl(publicUrl(poster.previewKey))]
     : [];
 
+  // Append the download terms to Stripe's product description so they're
+  // visible BEFORE payment (consumer-protection / transparency). Stripe
+  // caps description at 500 chars, so we trim the poster description and
+  // always reserve room for the terms line.
+  const TERMS = ' — Digital download. Link valid 48 hours, up to 5 downloads.';
+  const descBudget = 500 - TERMS.length;
+  const productDescription = poster.description.slice(0, descBudget) + TERMS;
+
   const session = await stripe().checkout.sessions.create(
     {
       mode: 'payment',
@@ -87,7 +95,7 @@ export async function createCheckoutForPoster(
             unit_amount: poster.priceCents,
             product_data: {
               name: poster.title,
-              description: poster.description.slice(0, 500),
+              description: productDescription,
               images: previewImage,
               // Mark as digital for tax classification (EU place-of-supply
               // rules: VAT at customer location for digital goods).

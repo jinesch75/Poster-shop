@@ -154,6 +154,13 @@ export default async function ProductPage({
                 </svg>
               </button>
             </form>
+
+            <p className="fine-print">
+              Digital download · High-resolution PNG · Link valid for 48 hours,
+              up to 5 downloads. Lost your file? Email{' '}
+              <a href="mailto:hello@linework.studio">hello@linework.studio</a>{' '}
+              and we&apos;ll reissue it.
+            </p>
           </div>
         </div>
 
