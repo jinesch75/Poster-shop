@@ -98,12 +98,12 @@ export default async function CityPage({
             className="empty-state"
             style={{ padding: '60px 20px', maxWidth: 620, margin: '0 auto' }}
           >
-            <p style={{ marginBottom: 20 }}>
+            <p style={{ marginBottom: 12 }}>
               {city.name} is {city.status === 'IN_PROGRESS' ? 'in progress' : 'planned'}.
             </p>
-            <Link className="btn-ghost" href="/#journal">
-              Get notified when it&apos;s live
-            </Link>
+            <p style={{ fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--mute)' }}>
+              Subscribe below to be notified
+            </p>
           </div>
         )}
 
