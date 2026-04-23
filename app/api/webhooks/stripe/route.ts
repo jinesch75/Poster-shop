@@ -18,6 +18,7 @@ import { randomBytes } from 'crypto';
 import type Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { stripe } from '@/lib/stripe';
+import { sendReceiptEmail } from '@/lib/receipt';
 
 export const runtime = 'nodejs';
 // Don't let Next cache anything on this route.
@@ -158,6 +159,24 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       }),
     ),
   ]);
+
+  // Send the receipt email. Intentionally outside the transaction — we never
+  // want an email failure to undo a PAID order, and we also never want to
+  // retry the whole webhook just because Brevo 5xx'd. If the email fails,
+  // the download still works (success page + admin re-issue button are the
+  // safety nets).
+  if (email) {
+    try {
+      await sendReceiptEmail({
+        orderId: order.id,
+        to: email,
+        toName: name,
+        stripeSessionId: session.id,
+      });
+    } catch (err) {
+      console.error('[stripe webhook] receipt email failed', order.id, err);
+    }
+  }
 }
 
 async function handleChargeRefunded(charge: Stripe.Charge) {

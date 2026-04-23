@@ -15,17 +15,7 @@
 import { prisma } from '@/lib/prisma';
 import { stripe, CURRENCY } from '@/lib/stripe';
 import { publicUrl } from '@/lib/storage';
-
-function absoluteUrl(path: string): string {
-  // Next.js doesn't give us a clean request URL in server actions; fall
-  // back to env. Railway sets NEXT_PUBLIC_SITE_URL on deploys.
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.VERCEL_URL ??
-    'http://localhost:3000';
-  const normalized = base.startsWith('http') ? base : `https://${base}`;
-  return `${normalized.replace(/\/$/, '')}${path}`;
-}
+import { absoluteUrl } from '@/lib/urls';
 
 export type CheckoutPosterInput = {
   posterId: string;

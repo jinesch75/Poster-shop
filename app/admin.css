@@ -593,3 +593,26 @@
 .admin-login__submit:hover {
   background: var(--accent-deep);
 }
+
+.admin-btn-secondary {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-strong);
+  cursor: pointer;
+  transition: all 160ms var(--ease);
+}
+.admin-btn-secondary:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.admin-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
