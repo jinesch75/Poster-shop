@@ -32,7 +32,14 @@ const cities: CitySeed[] = [
   },
   { slug: 'paris', name: 'Paris', number: '02', status: CityStatus.IN_PROGRESS, statusLabel: 'Summer 2026' },
   { slug: 'rome', name: 'Rome', number: '03', status: CityStatus.PLANNED, statusLabel: 'Autumn 2026' },
-  { slug: 'new-york', name: 'New York', number: '04', status: CityStatus.PLANNED, statusLabel: 'Winter 2026' },
+  {
+    slug: 'new-york',
+    name: 'New York',
+    number: '04',
+    status: CityStatus.AVAILABLE,
+    statusLabel: 'Available',
+    description: 'The second city in the series. Five posters, drawn across Manhattan and the East River.',
+  },
   { slug: 'tokyo', name: 'Tokyo', number: '05', status: CityStatus.PLANNED, statusLabel: '2027' },
 ];
 
@@ -111,6 +118,49 @@ const londonPosters: PosterSeed[] = [
   },
 ];
 
+const newYorkPosters: PosterSeed[] = [
+  {
+    slug: 'brooklyn-bridge',
+    title: 'Brooklyn Bridge',
+    number: 'N°09',
+    file: '/posters/brooklyn-bridge.png',
+    description:
+      'The granite towers and gothic arches of the East River crossing — engineering as cathedral, drawn in line and pinned to a band of red.',
+  },
+  {
+    slug: 'one-world',
+    title: 'One World',
+    number: 'N°10',
+    file: '/posters/one-world.png',
+    description:
+      "Lower Manhattan's faceted glass tower, drawn against a foundation of red and yellow planes.",
+  },
+  {
+    slug: 'flatiron',
+    title: 'Flatiron',
+    number: 'N°11',
+    file: '/posters/flatiron.png',
+    description:
+      "Daniel Burnham's wedge of 1902 at the corner of Fifth and Broadway — Beaux-Arts geometry held by yellow.",
+  },
+  {
+    slug: 'empire-state',
+    title: 'Empire State',
+    number: 'N°12',
+    file: '/posters/empire-state.png',
+    description:
+      'The 1931 art deco icon rendered as line, the streetscape descending into red and blue planes.',
+  },
+  {
+    slug: 'chrysler',
+    title: 'Chrysler',
+    number: 'N°13',
+    file: '/posters/chrysler.png',
+    description:
+      "Van Alen's stainless crown of 1930, drawn at street level with the avenue stretching beneath in primary colour.",
+  },
+];
+
 async function main() {
   console.log('Seeding cities...');
   for (const c of cities) {
@@ -155,6 +205,34 @@ async function main() {
         priceDigitalCents: 500,
         status: PosterStatus.PUBLISHED,
         cityId: london.id,
+      },
+      update: {
+        title: p.title,
+        number: p.number,
+        description: p.description,
+      },
+    });
+  }
+
+  const newYork = await prisma.city.findUniqueOrThrow({ where: { slug: 'new-york' } });
+
+  console.log('Seeding New York posters...');
+  for (const p of newYorkPosters) {
+    await prisma.poster.upsert({
+      where: { slug: p.slug },
+      create: {
+        slug: p.slug,
+        title: p.title,
+        number: p.number,
+        description: p.description,
+        masterKey: `public:${p.file}`,
+        previewKey: `public:${p.file}`,
+        thumbnailKey: `public:${p.file}`,
+        masterWidthPx: 1856,
+        masterHeightPx: 2464,
+        priceDigitalCents: 500,
+        status: PosterStatus.PUBLISHED,
+        cityId: newYork.id,
       },
       update: {
         title: p.title,
