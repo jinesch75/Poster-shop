@@ -89,7 +89,10 @@ export async function processMaster(
   const height = meta.height ?? 2464;
 
   // Preview — large, with diagonal wordmark + corner mark.
-  const previewWidth = 2400;
+  // Cap target width at the master's actual width so we never try to
+  // composite an SVG overlay that's larger than the base image
+  // (sharp errors with "Image to composite must have same dimensions or smaller").
+  const previewWidth = Math.min(2400, width);
   const previewHeight = Math.round((height / width) * previewWidth);
 
   const previewBuffer = await sharp(masterBuffer)
@@ -102,8 +105,8 @@ export async function processMaster(
     .toBuffer();
   const previewKey = await putBuffer('previews', previewBuffer, 'jpg');
 
-  // Thumbnail — small, corner mark only.
-  const thumbWidth = 800;
+  // Thumbnail — small, corner mark only. Same defensive cap as preview.
+  const thumbWidth = Math.min(800, width);
   const thumbHeight = Math.round((height / width) * thumbWidth);
   const thumbBuffer = await sharp(masterBuffer)
     .resize({ width: thumbWidth, withoutEnlargement: true })
@@ -212,7 +215,7 @@ export async function reprocessMaster(masterKey: string): Promise<PosterDerivati
   const width = meta.width ?? 1856;
   const height = meta.height ?? 2464;
 
-  const previewWidth = 2400;
+  const previewWidth = Math.min(2400, width);
   const previewHeight = Math.round((height / width) * previewWidth);
   const previewBuffer = await sharp(buffer)
     .resize({ width: previewWidth, withoutEnlargement: true })
@@ -224,7 +227,7 @@ export async function reprocessMaster(masterKey: string): Promise<PosterDerivati
     .toBuffer();
   const previewKey = await putBuffer('previews', previewBuffer, 'jpg');
 
-  const thumbWidth = 800;
+  const thumbWidth = Math.min(800, width);
   const thumbHeight = Math.round((height / width) * thumbWidth);
   const thumbBuffer = await sharp(buffer)
     .resize({ width: thumbWidth, withoutEnlargement: true })

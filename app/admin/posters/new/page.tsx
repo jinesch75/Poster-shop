@@ -57,7 +57,14 @@ async function createPoster(formData: FormData) {
 
   const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
   const buffer = Buffer.from(await file.arrayBuffer());
-  const derivatives = await processMaster(buffer, ext);
+
+  let derivatives: Awaited<ReturnType<typeof processMaster>>;
+  try {
+    derivatives = await processMaster(buffer, ext);
+  } catch (err) {
+    console.error('processMaster failed', err);
+    failWith('Image processing failed — try a different file or check the master is at least 800px on the long edge.');
+  }
 
   await prisma.poster.create({
     data: {
