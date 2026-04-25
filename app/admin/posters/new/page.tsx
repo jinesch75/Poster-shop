@@ -16,6 +16,13 @@ function slugify(input: string): string {
     .slice(0, 80);
 }
 
+// Redirects back to the form with an inline error message instead of
+// throwing — throwing in a server action shows the white-screen
+// "Application error" page in production, which hides the actual issue.
+function failWith(message: string): never {
+  redirect(`/admin/posters/new?error=${encodeURIComponent(message)}`);
+}
+
 async function createPoster(formData: FormData) {
   'use server';
 
@@ -30,19 +37,19 @@ async function createPoster(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(firstError(parsed) ?? 'Invalid input');
+    failWith(firstError(parsed) ?? 'Invalid input');
   }
 
   const file = formData.get('file') as File | null;
   if (!file || file.size === 0) {
-    throw new Error('A master image file is required.');
+    failWith('A master image file is required.');
   }
   // Reject anything larger than 50MB — matches next.config.mjs bodySizeLimit.
   if (file.size > 50 * 1024 * 1024) {
-    throw new Error('Master image is over the 50MB limit.');
+    failWith('Master image is over the 50MB limit.');
   }
   if (!['image/png', 'image/jpeg'].includes(file.type)) {
-    throw new Error('Only PNG or JPEG master files are accepted.');
+    failWith('Only PNG or JPEG master files are accepted.');
   }
 
   const { title, number, description, cityId, priceEur, publish, landmarkType } =
@@ -75,7 +82,12 @@ async function createPoster(formData: FormData) {
   redirect('/admin/posters');
 }
 
-export default async function AdminNewPosterPage() {
+export default async function AdminNewPosterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const cities = await prisma.city.findMany({ orderBy: { number: 'asc' } });
 
   return (
@@ -90,6 +102,12 @@ export default async function AdminNewPosterPage() {
           </p>
         </div>
       </header>
+
+      {error && (
+        <p className="admin-banner admin-banner--error" role="alert">
+          {error}
+        </p>
+      )}
 
       <form action={createPoster} className="admin-form" encType="multipart/form-data">
         <div className="admin-form__row">

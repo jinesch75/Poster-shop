@@ -471,6 +471,12 @@
   margin-bottom: 24px;
 }
 
+.admin-banner--error {
+  background: #fdf3f2;
+  border-left-color: #c0392b;
+  color: #6f1d16;
+}
+
 .admin-danger-zone {
   margin-top: 48px;
   padding-top: 24px;
