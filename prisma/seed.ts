@@ -116,6 +116,54 @@ const londonPosters: PosterSeed[] = [
     description:
       'Big Ben and the London Eye held together by the Thames — a panoramic composition in primaries.',
   },
+  {
+    slug: 'westminster-primary-ii',
+    title: 'Westminster Primary II',
+    number: 'N°14',
+    file: '/posters/westminster-primary-ii.png',
+    description:
+      'The Elizabeth Tower from the street — red buses crossing beneath, the city in primary colour.',
+  },
+  {
+    slug: 'south-bank-ii',
+    title: 'South Bank II',
+    number: 'N°15',
+    file: '/posters/south-bank-ii.png',
+    description:
+      'The London Eye in vertical close — the wheel filling the frame against the river quarter.',
+  },
+  {
+    slug: 'tower-bridge-ii',
+    title: 'Tower Bridge II',
+    number: 'N°16',
+    file: '/posters/tower-bridge-ii.png',
+    description:
+      "The bridge's northern tower in close detail — Victorian Gothic in linework, red holding the upper deck.",
+  },
+  {
+    slug: 'st-pauls-ii',
+    title: "St Paul's II",
+    number: 'N°17',
+    file: '/posters/st-pauls-ii.png',
+    description:
+      "Wren's dome above Ludgate — the avenue funnelling the eye toward the cross.",
+  },
+  {
+    slug: 'the-shard-ii',
+    title: 'The Shard II',
+    number: 'N°18',
+    file: '/posters/the-shard-ii.png',
+    description:
+      "Renzo Piano's spire from below — glass and steel rising through the city.",
+  },
+  {
+    slug: 'westminster-abbey-ii',
+    title: 'Westminster Abbey II',
+    number: 'N°19',
+    file: '/posters/westminster-abbey-ii.png',
+    description:
+      'The west facade and rose window — gothic stone caught between primary verticals.',
+  },
 ];
 
 const newYorkPosters: PosterSeed[] = [
