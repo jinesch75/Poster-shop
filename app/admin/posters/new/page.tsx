@@ -66,25 +66,52 @@ async function createPoster(formData: FormData) {
     failWith('Image processing failed — try a different file or check the master is at least 800px on the long edge.');
   }
 
-  await prisma.poster.create({
-    data: {
-      slug: slugify(title),
-      title,
-      number,
-      description,
-      cityId,
-      landmarkType,
-      masterKey: derivatives.masterKey,
-      previewKey: derivatives.previewKey,
-      thumbnailKey: derivatives.thumbnailKey,
-      mockupOfficeKey: derivatives.mockupOfficeKey,
-      mockupLivingKey: derivatives.mockupLivingKey,
-      masterWidthPx: derivatives.widthPx,
-      masterHeightPx: derivatives.heightPx,
-      priceDigitalCents: Math.round(priceEur * 100),
-      status: publish ? 'PUBLISHED' : 'DRAFT',
-    },
-  });
+  const slug = slugify(title);
+
+  // Block duplicate slugs proactively with a friendly message rather than
+  // surfacing the Prisma P2002 unique-constraint error as a 500.
+  const existing = await prisma.poster.findUnique({ where: { slug } });
+  if (existing) {
+    failWith(
+      `A poster with the title "${title}" already exists. Pick a different title (e.g. add the year, the angle, or a roman numeral).`,
+    );
+  }
+
+  try {
+    await prisma.poster.create({
+      data: {
+        slug,
+        title,
+        number,
+        description,
+        cityId,
+        landmarkType,
+        masterKey: derivatives.masterKey,
+        previewKey: derivatives.previewKey,
+        thumbnailKey: derivatives.thumbnailKey,
+        mockupOfficeKey: derivatives.mockupOfficeKey,
+        mockupLivingKey: derivatives.mockupLivingKey,
+        masterWidthPx: derivatives.widthPx,
+        masterHeightPx: derivatives.heightPx,
+        priceDigitalCents: Math.round(priceEur * 100),
+        status: publish ? 'PUBLISHED' : 'DRAFT',
+      },
+    });
+  } catch (err) {
+    // Defensive: catches the rare race where a duplicate slug appears
+    // between the findUnique check above and the create call.
+    if (
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code?: unknown }).code === 'P2002'
+    ) {
+      failWith(
+        `A poster with the title "${title}" already exists. Pick a different title.`,
+      );
+    }
+    throw err;
+  }
 
   redirect('/admin/posters');
 }
