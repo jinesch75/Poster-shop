@@ -3,9 +3,13 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { publicUrl } from '@/lib/storage';
-import { reprocessMaster } from '@/lib/watermark';
+import { processMaster, reprocessMaster } from '@/lib/watermark';
 
 export const dynamic = 'force-dynamic';
+
+function failBack(id: string, message: string): never {
+  redirect(`/admin/posters/${id}?error=${encodeURIComponent(message)}`);
+}
 
 async function updatePoster(id: string, formData: FormData) {
   'use server';
@@ -20,7 +24,7 @@ async function updatePoster(id: string, formData: FormData) {
       status: formData.get('publish') === 'on' ? 'PUBLISHED' : 'DRAFT',
     },
   });
-  redirect(`/admin/posters/${id}`);
+  redirect(`/admin/posters/${id}?ok=saved`);
 }
 
 async function regeneratePreviews(id: string) {
@@ -40,7 +44,50 @@ async function regeneratePreviews(id: string) {
       mockupLivingKey: derivatives.mockupLivingKey,
     },
   });
-  redirect(`/admin/posters/${id}`);
+  redirect(`/admin/posters/${id}?ok=regenerated`);
+}
+
+async function replaceMaster(id: string, formData: FormData) {
+  'use server';
+  const file = formData.get('file') as File | null;
+
+  if (!file || file.size === 0) {
+    failBack(id, 'Please select a master file to upload.');
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    failBack(id, 'Master image is over the 50MB limit.');
+  }
+  if (!['image/png', 'image/jpeg'].includes(file.type)) {
+    failBack(id, 'Only PNG or JPEG master files are accepted.');
+  }
+
+  const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  let derivatives: Awaited<ReturnType<typeof processMaster>>;
+  try {
+    derivatives = await processMaster(buffer, ext);
+  } catch (err) {
+    console.error('processMaster failed', err);
+    failBack(
+      id,
+      'Image processing failed — try a different file or check the master is at least 800px on the long edge.',
+    );
+  }
+
+  await prisma.poster.update({
+    where: { id },
+    data: {
+      masterKey: derivatives.masterKey,
+      previewKey: derivatives.previewKey,
+      thumbnailKey: derivatives.thumbnailKey,
+      mockupOfficeKey: derivatives.mockupOfficeKey,
+      mockupLivingKey: derivatives.mockupLivingKey,
+      masterWidthPx: derivatives.widthPx,
+      masterHeightPx: derivatives.heightPx,
+    },
+  });
+  redirect(`/admin/posters/${id}?ok=master-replaced`);
 }
 
 async function deletePoster(id: string) {
@@ -54,10 +101,10 @@ export default async function AdminPosterEdit({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error, ok } = await searchParams;
 
   const [poster, cities] = await Promise.all([
     prisma.poster.findUnique({ where: { id }, include: { city: true } }),
@@ -68,11 +115,22 @@ export default async function AdminPosterEdit({
 
   const update = updatePoster.bind(null, id);
   const regenerate = regeneratePreviews.bind(null, id);
+  const replace = replaceMaster.bind(null, id);
   const del = deletePoster.bind(null, id);
 
   const preview = publicUrl(poster.previewKey ?? poster.masterKey);
   const officeMockup = publicUrl(poster.mockupOfficeKey);
   const livingMockup = publicUrl(poster.mockupLivingKey);
+  const isLegacyPublic = poster.masterKey.startsWith('public:');
+
+  const successMessage =
+    ok === 'master-replaced'
+      ? 'Master replaced. Watermark and mockups regenerated.'
+      : ok === 'regenerated'
+        ? 'Previews and mockups regenerated.'
+        : ok === 'saved'
+          ? 'Changes saved.'
+          : null;
 
   return (
     <div className="admin-page">
@@ -88,10 +146,20 @@ export default async function AdminPosterEdit({
         </div>
       </header>
 
-      {error === 'no-volume-master' && (
+      {error === 'no-volume-master' ? (
         <p className="admin-banner">
           This poster&apos;s master lives in the legacy public bucket. Upload a
-          fresh master to regenerate derivatives.
+          fresh master below to regenerate derivatives.
+        </p>
+      ) : error ? (
+        <p className="admin-banner admin-banner--error" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {successMessage && (
+        <p className="admin-banner admin-banner--success" role="status">
+          {successMessage}
         </p>
       )}
 
@@ -120,6 +188,39 @@ export default async function AdminPosterEdit({
           <form action={regenerate}>
             <button type="submit" className="admin-btn-ghost">
               Regenerate previews &amp; mockups
+            </button>
+          </form>
+
+          <form
+            action={replace}
+            encType="multipart/form-data"
+            className="admin-replace-master"
+          >
+            <h3>Replace master image</h3>
+            <p className="admin-muted">
+              Upload a new master file (PNG or JPG, up to 50MB). The watermarked
+              preview, thumbnail, and both room mockups will be regenerated
+              automatically. The poster&apos;s title, slug, and metadata stay
+              unchanged.
+              {isLegacyPublic && (
+                <>
+                  {' '}
+                  <strong>
+                    This poster currently uses a legacy seeded master — uploading
+                    a new file moves it onto the volume and unlocks the regenerate
+                    button.
+                  </strong>
+                </>
+              )}
+            </p>
+            <input
+              name="file"
+              type="file"
+              accept="image/png,image/jpeg"
+              required
+            />
+            <button type="submit" className="admin-btn-primary">
+              Replace master &amp; regenerate
             </button>
           </form>
         </section>

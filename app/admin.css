@@ -477,6 +477,37 @@
   color: #6f1d16;
 }
 
+.admin-banner--success {
+  background: #f1f7f1;
+  border-left-color: #4f7a4a;
+  color: #2c4a2a;
+}
+
+.admin-replace-master {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.admin-replace-master h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.admin-replace-master p {
+  margin: 0;
+  max-width: 56ch;
+}
+
+.admin-replace-master input[type='file'] {
+  font-size: 14px;
+}
+
 .admin-danger-zone {
   margin-top: 48px;
   padding-top: 24px;
