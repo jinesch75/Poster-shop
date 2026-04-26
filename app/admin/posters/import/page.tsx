@@ -1,23 +1,24 @@
-// Bulk import from the repo's incoming/ folder.
+// Bulk import — two parallel paths to the same place.
 //
-// Workflow:
-//   1. Jacques drops new master files into  incoming/<city-slug>/  in his
-//      working tree, commits, pushes.
-//   2. Railway redeploys; the files now exist on the container.
-//   3. He visits /admin/posters/import — the page lists every file in
-//      incoming/ that doesn't already correspond to a poster.
-//   4. He hits "Import all" → each file is run through the pipeline and
-//      gets a DRAFT poster row with auto-generated metadata.
-//   5. He clicks into each draft to refine the description and publish.
+// Path A (git, for batches): drop files into incoming/<city-slug>/,
+// commit, push, wait for Railway to redeploy, then click "Import N
+// files". Originals live in commit history. No HTTP body limits.
 //
-// Idempotent: re-running skips slugs that already exist. Filename
-// collisions across city folders are reported as conflicts.
+// Path B (browser drag-and-drop, for one or two): use the QuickUpload
+// dropzone, pick a city, drop the files. They go straight to the
+// volume — no commit, no redeploy. Capped at 50 MB per file (matches
+// next.config.mjs serverActions.bodySizeLimit).
+//
+// Both paths run files through the same processMaster pipeline and
+// create DRAFT posters with auto-generated metadata. Refine and publish
+// from /admin/posters/[id].
 
 import { redirect } from 'next/navigation';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { prisma } from '@/lib/prisma';
 import { processMaster } from '@/lib/watermark';
+import { QuickUploadDropzone } from '@/components/QuickUploadDropzone';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Import posters — Linework Studio Admin' };
@@ -208,6 +209,105 @@ async function runImport(): Promise<void> {
   redirect(`/admin/posters/import?report=${encodeURIComponent(summary)}`);
 }
 
+async function runQuickUpload(formData: FormData): Promise<void> {
+  'use server';
+
+  const cityId = String(formData.get('cityId') ?? '');
+  const files = formData.getAll('files') as File[];
+
+  const results: ImportResult[] = [];
+
+  if (!cityId) {
+    redirect(
+      `/admin/posters/import?report=${encodeURIComponent('upload|failed|No city selected.')}`,
+    );
+  }
+
+  const city = await prisma.city.findUnique({
+    where: { id: cityId },
+    select: { slug: true },
+  });
+  if (!city) {
+    redirect(
+      `/admin/posters/import?report=${encodeURIComponent('upload|failed|Unknown city.')}`,
+    );
+  }
+  const citySlug = city!.slug;
+
+  const slugsTouched = new Set<string>();
+
+  for (const file of files) {
+    if (!(file instanceof File) || file.size === 0) continue;
+
+    const posterSlug = deriveSlug(file.name);
+    if (!posterSlug) {
+      results.push({
+        posterSlug: file.name,
+        status: 'failed',
+        detail: 'Could not derive slug from filename.',
+      });
+      continue;
+    }
+
+    if (slugsTouched.has(posterSlug)) {
+      results.push({
+        posterSlug,
+        status: 'failed',
+        detail: 'Slug collision with another file in this batch — rename one.',
+      });
+      continue;
+    }
+    slugsTouched.add(posterSlug);
+
+    const existing = await prisma.poster.findUnique({ where: { slug: posterSlug } });
+    if (existing) {
+      results.push({
+        posterSlug,
+        status: 'skipped',
+        detail: 'Poster with this slug already exists.',
+      });
+      continue;
+    }
+
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
+      const derivatives = await processMaster(buffer, posterSlug, ext);
+      const number = await nextPosterNumber();
+      await prisma.poster.create({
+        data: {
+          slug: posterSlug,
+          title: deriveTitle(file.name),
+          number,
+          description:
+            DEFAULT_DESCRIPTION_BY_CITY[citySlug] ??
+            'Architectural linework and primary blocks.',
+          cityId,
+          masterKey: derivatives.masterKey,
+          previewKey: derivatives.previewKey,
+          thumbnailKey: derivatives.thumbnailKey,
+          mockupOfficeKey: derivatives.mockupOfficeKey,
+          mockupLivingKey: derivatives.mockupLivingKey,
+          masterWidthPx: derivatives.widthPx,
+          masterHeightPx: derivatives.heightPx,
+          priceDigitalCents: 500,
+          status: 'DRAFT',
+        },
+      });
+      results.push({ posterSlug, status: 'imported' });
+    } catch (err) {
+      console.error(`quick-upload failed for ${posterSlug}`, err);
+      const detail = err instanceof Error ? err.message : String(err);
+      results.push({ posterSlug, status: 'failed', detail });
+    }
+  }
+
+  const summary = results
+    .map((r) => `${r.posterSlug}|${r.status}${r.detail ? '|' + r.detail.replace(/[|,]/g, ' ') : ''}`)
+    .join(',');
+  redirect(`/admin/posters/import?report=${encodeURIComponent(summary)}`);
+}
+
 function parseReport(raw: string | undefined): ImportResult[] {
   if (!raw) return [];
   return raw
@@ -238,7 +338,10 @@ export default async function ImportPage({
       })
     ).map((p) => p.slug),
   );
-  const cities = await prisma.city.findMany({ select: { slug: true } });
+  const cities = await prisma.city.findMany({
+    select: { id: true, slug: true, name: true },
+    orderBy: { number: 'asc' },
+  });
   const knownCitySlugs = new Set(cities.map((c) => c.slug));
 
   const pending = candidates.filter(
@@ -256,13 +359,31 @@ export default async function ImportPage({
           <p className="admin-page__eyebrow">Catalog</p>
           <h1>Bulk import</h1>
           <p className="admin-page__sub">
-            Drop master files into <code>incoming/&lt;city-slug&gt;/</code> in
-            the repo, push, redeploy, then click below to ingest. Imports
-            are created as drafts so you can refine the title and
-            description before publishing.
+            Two ways in — drag-and-drop straight from your computer for
+            one or two pictures, or drop into <code>incoming/&lt;city-slug&gt;/</code>{' '}
+            in the repo and push for a whole batch. Both create DRAFT
+            posters with auto-generated metadata; refine and publish
+            from <code>/admin/posters</code>.
           </p>
         </div>
       </header>
+
+      <section style={{ marginBottom: 40 }}>
+        <h2 style={{ marginTop: 0 }}>Quick upload</h2>
+        <p className="admin-muted" style={{ marginTop: 0, marginBottom: 16 }}>
+          Drop files directly into the volume — no commit, no redeploy.
+          50 MB cap per file.
+        </p>
+        <QuickUploadDropzone cities={cities} action={runQuickUpload} />
+      </section>
+
+      <hr style={{ border: 0, borderTop: '1px solid var(--rule)', margin: '40px 0' }} />
+
+      <h2>From the repo's <code>incoming/</code> folder</h2>
+      <p className="admin-muted" style={{ marginTop: 0, marginBottom: 16 }}>
+        Drop, push, wait for Railway to redeploy, then click below.
+        Originals stay in commit history.
+      </p>
 
       <section className="admin-card" style={{ marginBottom: 24 }}>
         <p style={{ margin: 0 }}>

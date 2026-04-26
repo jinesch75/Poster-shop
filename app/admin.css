@@ -653,3 +653,110 @@
   opacity: 0.5;
   cursor: wait;
 }
+
+/* ---------- Quick upload dropzone ---------- */
+.quick-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.quick-upload__row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+.quick-upload__city {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 240px;
+}
+.quick-upload__city > span {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute, #888);
+  font-weight: 500;
+}
+.quick-upload__city select {
+  padding: 10px 12px;
+  border: 1px solid var(--rule, #d8d4cb);
+  background: var(--paper, #faf7f0);
+  border-radius: 3px;
+  font: inherit;
+}
+.quick-upload__drop {
+  border: 1.5px dashed var(--rule-strong, #b8b3a7);
+  border-radius: 6px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+  background: rgba(0, 0, 0, 0.015);
+}
+.quick-upload__drop:hover,
+.quick-upload__drop:focus-visible {
+  border-color: var(--accent, #1a1a1a);
+  background: rgba(0, 0, 0, 0.03);
+}
+.quick-upload__drop--over {
+  border-color: var(--accent, #1a1a1a);
+  background: rgba(0, 0, 0, 0.05);
+}
+.quick-upload__drop-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink, #1a1a1a);
+  margin: 0 0 6px;
+}
+.quick-upload__drop-hint {
+  font-size: 12px;
+  color: var(--mute, #888);
+  margin: 0;
+  max-width: 60ch;
+  margin-inline: auto;
+  line-height: 1.5;
+}
+.quick-upload__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.quick-upload__list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--paper-warm, #f4f0e6);
+  border-radius: 3px;
+  font-size: 13px;
+}
+.quick-upload__list code {
+  flex: 1 1 auto;
+  font-family: var(--mono, ui-monospace, SFMono-Regular, monospace);
+  word-break: break-all;
+}
+.quick-upload__size {
+  flex: 0 0 auto;
+  color: var(--mute, #888);
+  font-variant-numeric: tabular-nums;
+}
+.quick-upload__remove {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--mute, #888);
+  cursor: pointer;
+  border-radius: 3px;
+}
+.quick-upload__remove:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ink, #1a1a1a);
+}

@@ -1,0 +1,25 @@
+import: add browser drag-and-drop upload alongside the git path
+
+The /admin/posters/import page now offers two parallel paths:
+
+* Quick upload (new): a drag-and-drop dropzone + city dropdown.
+  Files go straight to the volume via a server action — no commit,
+  no Railway redeploy. 50 MB cap per file (matches the existing
+  next.config.mjs serverActions.bodySizeLimit). Use this for one
+  or two iterations.
+
+* From incoming/ (existing): drop into incoming/<city-slug>/, push,
+  redeploy, click "Import N files". Originals live in commit
+  history. Use this for big batches.
+
+Both paths run files through the same processMaster pipeline,
+create DRAFT posters with auto-generated metadata, and report a
+unified per-file results table.
+
+Files:
+* components/QuickUploadDropzone.tsx — client component, drag/drop
+  + visual states + per-file rejections (wrong type / over 50MB)
+  + remove buttons before submit.
+* app/admin/posters/import/page.tsx — runQuickUpload server action
+  + UI section above the existing git-based section.
+* app/admin.css — .quick-upload__* styles.
