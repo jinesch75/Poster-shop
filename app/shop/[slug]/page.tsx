@@ -1,7 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Watermark } from '@/components/Watermark';
+import { ProtectedImage } from '@/components/ProtectedImage';
 import { PosterCard } from '@/components/PosterCard';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
@@ -12,6 +11,7 @@ import {
 } from '@/lib/posters';
 import { startCheckoutForPoster } from '@/app/actions/checkout';
 import { stripeConfigured } from '@/lib/stripe';
+import { largestSharpPrintSize } from '@/lib/print-size';
 
 // Regenerate product pages when content changes; don't force dynamic
 // rendering since posters don't change on every request.
@@ -52,6 +52,10 @@ export default async function ProductPage({
   if (!poster) notFound();
 
   const related = await getRelatedPosters(poster, 3);
+  const printSize = largestSharpPrintSize(
+    poster.masterWidthPx,
+    poster.masterHeightPx,
+  );
 
   return (
     <>
@@ -60,7 +64,7 @@ export default async function ProductPage({
       <section className="section">
         <div className="product">
           <div className="main-preview">
-            <Image
+            <ProtectedImage
               src={poster.file}
               alt={poster.title}
               width={poster.masterWidthPx}
@@ -68,7 +72,6 @@ export default async function ProductPage({
               priority
               sizes="(max-width: 900px) 100vw, 55vw"
             />
-            <Watermark lines={8} fontSize={20} />
           </div>
 
           <div className="info">
@@ -97,6 +100,13 @@ export default async function ProductPage({
             <h2>{poster.title}</h2>
             <p className="byline">{poster.description}</p>
 
+            {printSize && (
+              <p className="print-size-badge" aria-label={`Prints sharp at ${printSize}`}>
+                <span className="print-size-badge__chip">{printSize}</span>
+                <span>Prints sharp at {printSize} (300 dpi)</span>
+              </p>
+            )}
+
             <p className="wm-note">
               <svg
                 width="13"
@@ -110,9 +120,9 @@ export default async function ProductPage({
                 <path d="M7 10l2 2 4-4" />
               </svg>
               <span>
-                The watermark shown here is only on the preview. Your downloaded
-                files are{' '}
-                <strong>clean, unmarked, and yours to print.</strong>
+                The small QR mark on the preview is for the public listing only.
+                Your downloaded file is{' '}
+                <strong>full resolution, unmarked, and yours to print.</strong>
               </span>
             </p>
 

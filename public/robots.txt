@@ -1,0 +1,11 @@
+# Linework Studio — robots policy
+# Block crawlers from admin, internal API, and the QR redirect endpoint.
+# Sitemap line points at the dynamic sitemap route in app/sitemap.ts.
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /q/
+
+Sitemap: https://poster-shop-production.up.railway.app/sitemap.xml

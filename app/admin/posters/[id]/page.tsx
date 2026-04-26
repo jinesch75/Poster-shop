@@ -34,7 +34,7 @@ async function regeneratePreviews(id: string) {
   if (poster.masterKey.startsWith('public:')) {
     redirect(`/admin/posters/${id}?error=no-volume-master`);
   }
-  const derivatives = await reprocessMaster(poster.masterKey);
+  const derivatives = await reprocessMaster(poster.masterKey, poster.slug);
   await prisma.poster.update({
     where: { id },
     data: {
@@ -64,9 +64,17 @@ async function replaceMaster(id: string, formData: FormData) {
   const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
   const buffer = Buffer.from(await file.arrayBuffer());
 
+  // Look up the slug so we can bake it into the QR. Replacing a master
+  // never changes the slug, so this is the same QR target the previous
+  // preview encoded.
+  const existing = await prisma.poster.findUniqueOrThrow({
+    where: { id },
+    select: { slug: true },
+  });
+
   let derivatives: Awaited<ReturnType<typeof processMaster>>;
   try {
-    derivatives = await processMaster(buffer, ext);
+    derivatives = await processMaster(buffer, existing.slug, ext);
   } catch (err) {
     console.error('processMaster failed', err);
     failBack(

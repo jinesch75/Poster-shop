@@ -661,6 +661,28 @@ footer.site-footer .links .sep { color: var(--rule-strong); }
 .product .info .breadcrumb { color: var(--mute); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 28px; }
 .product .info h2 { margin-bottom: 18px; }
 .product .info .byline { color: var(--ink-soft); max-width: 48ch; margin-bottom: 18px; }
+.print-size-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin: 0 0 22px;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.print-size-badge__chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 22px;
+  padding: 0 8px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 999px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
 .product .info .wm-note {
   display: flex; gap: 10px; align-items: flex-start;
   padding: 12px 14px;

@@ -1,65 +1,39 @@
 // Watermark + derivative pipeline.
+//
 // One master file in → master + preview + thumbnail + two mockups out.
-// All overlays are generated as SVG so the wordmark stays vector-crisp
-// at any scale — no bitmap logo needed in v1.
+//
+// Strategy (rebuilt 2026-04-26): resolution is the protection. The clean
+// 4000px+ master stays private, served only via signed download URLs after
+// purchase. The public 1200px preview is gorgeous on screen but useless for
+// printing at any meaningful size — at 300dpi it tops out around postcard
+// size. A tiny QR code in the bottom-right corner points back at our site
+// (`/q/<slug>` → server-side redirect), so any leaked image becomes a
+// scannable advert. The thumbnail is even smaller (500px) and mark-free.
 
 import sharp from 'sharp';
-import { putBuffer, readBuffer } from './storage';
 import path from 'path';
 import { promises as fs } from 'fs';
+import { putBuffer, readBuffer } from './storage';
+import { qrPngBuffer, qrTargetUrl } from './qr';
 
-const BRAND_TEXT = 'LINEWORK · STUDIO';
+// ---------- Asset dimensions ----------
 
-// ---------- SVG overlay generators ----------
+/** Public preview: large enough to look great on a 4K screen, too small to print well. */
+const PREVIEW_TARGET_WIDTH = 1200;
 
-function diagonalWordmarkSvg(width: number, height: number): string {
-  // A repeating diagonal band of "LINEWORK · STUDIO" at ~15% opacity.
-  // Font size scales with the image; keep letter-spacing generous.
-  const fontSize = Math.round(Math.min(width, height) * 0.045);
-  const gap = fontSize * 5.5;
-  // Build enough rows to cover the diagonal.
-  const rows: string[] = [];
-  const count = Math.ceil((width + height) / gap) + 2;
-  for (let i = -count; i < count; i += 1) {
-    const y = i * gap + height / 2;
-    rows.push(
-      `<text x="${width / 2}" y="${y}" text-anchor="middle" ` +
-        `font-family="Outfit, Inter, Helvetica, Arial, sans-serif" ` +
-        `font-size="${fontSize}" font-weight="300" ` +
-        `letter-spacing="${fontSize * 0.35}" ` +
-        `fill="#1a1a1a" fill-opacity="0.12">` +
-        `${BRAND_TEXT}</text>`,
-    );
-  }
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <g transform="rotate(-28 ${width / 2} ${height / 2})">
-        ${rows.join('\n')}
-      </g>
-    </svg>
-  `.trim();
-}
+/** Public thumbnail: grid display only. */
+const THUMB_TARGET_WIDTH = 500;
 
-function cornerWordmarkSvg(width: number, height: number): string {
-  // Small corner mark — bottom right, the same two-weight wordmark as the UI.
-  const fontSize = Math.round(Math.min(width, height) * 0.022);
-  const padX = Math.round(width * 0.035);
-  const padY = Math.round(height * 0.03);
-  const x = width - padX;
-  const y = height - padY;
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <g text-anchor="end" font-family="Outfit, Inter, Helvetica, Arial, sans-serif"
-         font-size="${fontSize}" fill="#1a1a1a" fill-opacity="0.55">
-        <text x="${x}" y="${y}" font-weight="600" letter-spacing="${fontSize * 0.08}">
-          Linework<tspan font-weight="300" fill-opacity="0.35"> Studio</tspan>
-        </text>
-      </g>
-    </svg>
-  `.trim();
-}
+/** QR stamp size as a fraction of the preview's actual width. */
+const QR_FRACTION_OF_WIDTH = 0.085;
 
-// ---------- Generators ----------
+/** Inner white pill padding around the QR (each side, in QR pixels). */
+const QR_PILL_PADDING = 8;
+
+/** Distance from the preview edge to the QR pill (each side, as a fraction of preview width). */
+const QR_EDGE_INSET_FRACTION = 0.022;
+
+// ---------- Public types ----------
 
 export type PosterDerivatives = {
   masterKey: string;
@@ -71,56 +45,96 @@ export type PosterDerivatives = {
   heightPx: number;
 };
 
+// ---------- Pipeline ----------
+
 /**
  * Run the full pipeline: write master + generate three public derivatives
  * + two mockups. Returns storage keys for all of them.
  *
- * masterBuffer: raw bytes of the uploaded master file (PNG/JPG).
+ * @param masterBuffer raw bytes of the uploaded master file (PNG/JPG)
+ * @param slug         poster slug — baked into the QR code as `/q/<slug>`
+ * @param ext          original master extension (informs the master file's stored ext)
  */
 export async function processMaster(
   masterBuffer: Buffer,
+  slug: string,
   ext: 'png' | 'jpg' = 'png',
 ): Promise<PosterDerivatives> {
-  // Master — untouched, private bucket.
+  // Master — untouched, written to private volume storage.
   const masterKey = await putBuffer('masters', masterBuffer, ext);
 
+  return runDerivatives(masterBuffer, slug, masterKey);
+}
+
+/**
+ * Rebuild derivatives from an already-uploaded master.
+ *
+ * Used by the per-poster "Regenerate previews & mockups" admin button and
+ * by the bulk backfill route.
+ */
+export async function reprocessMaster(
+  masterKey: string,
+  slug: string,
+): Promise<PosterDerivatives> {
+  const buffer = await readBuffer(masterKey);
+  return runDerivatives(buffer, slug, masterKey);
+}
+
+// ---------- Internal: derivative generation ----------
+
+async function runDerivatives(
+  masterBuffer: Buffer,
+  slug: string,
+  masterKey: string,
+): Promise<PosterDerivatives> {
   const meta = await sharp(masterBuffer).metadata();
   const width = meta.width ?? 1856;
   const height = meta.height ?? 2464;
 
-  // Preview — large, with diagonal wordmark + corner mark.
-  // Cap target width at the master's actual width so we never try to
-  // composite an SVG overlay that's larger than the base image
-  // (sharp errors with "Image to composite must have same dimensions or smaller").
-  const previewWidth = Math.min(2400, width);
+  // ---- Preview (1200px + QR) ----------------------------------------
+  // Cap target width at the master's actual width so we never upscale
+  // (sharp errors with "Image to composite must have same dimensions
+  // or smaller" if we try to overlay something bigger than the source).
+  const previewWidth = Math.min(PREVIEW_TARGET_WIDTH, width);
   const previewHeight = Math.round((height / width) * previewWidth);
+
+  // Render the QR as a real PNG buffer at the target stamp size.
+  // We then frame it in a soft-white rounded "pill" so it scans even
+  // when it lands on top of one of the dark Mondrian colour blocks.
+  const qrSize = Math.round(previewWidth * QR_FRACTION_OF_WIDTH);
+  const qrPng = await qrPngBuffer(qrTargetUrl(slug), qrSize);
+  const qrBadge = await buildQrBadge(qrPng, qrSize);
+  const badgeSize = qrSize + QR_PILL_PADDING * 2;
+  const inset = Math.round(previewWidth * QR_EDGE_INSET_FRACTION);
 
   const previewBuffer = await sharp(masterBuffer)
     .resize({ width: previewWidth, withoutEnlargement: true })
     .composite([
-      { input: Buffer.from(diagonalWordmarkSvg(previewWidth, previewHeight)), top: 0, left: 0 },
-      { input: Buffer.from(cornerWordmarkSvg(previewWidth, previewHeight)), top: 0, left: 0 },
+      {
+        input: qrBadge,
+        top: previewHeight - badgeSize - inset,
+        left: previewWidth - badgeSize - inset,
+      },
     ])
     .jpeg({ quality: 82, mozjpeg: true })
     .toBuffer();
   const previewKey = await putBuffer('previews', previewBuffer, 'jpg');
 
-  // Thumbnail — small, corner mark only. Same defensive cap as preview.
-  const thumbWidth = Math.min(800, width);
-  const thumbHeight = Math.round((height / width) * thumbWidth);
+  // ---- Thumbnail (500px, clean) -------------------------------------
+  // No QR on the thumbnail — at 500px wide a QR would be illegible
+  // anyway, and the grid card is small enough that the QR-on-preview
+  // is the public-facing scannable copy.
+  const thumbWidth = Math.min(THUMB_TARGET_WIDTH, width);
   const thumbBuffer = await sharp(masterBuffer)
     .resize({ width: thumbWidth, withoutEnlargement: true })
-    .composite([
-      { input: Buffer.from(cornerWordmarkSvg(thumbWidth, thumbHeight)), top: 0, left: 0 },
-    ])
     .jpeg({ quality: 82, mozjpeg: true })
     .toBuffer();
   const thumbnailKey = await putBuffer('thumbnails', thumbBuffer, 'jpg');
 
-  // Mockups — composited onto neutral room plates.
-  // The plates live in public/mockups/. If a plate is missing, we fall back
-  // to a softly shaded room generated from SVG so the pipeline never fails
-  // hard on a fresh install.
+  // ---- Mockups -------------------------------------------------------
+  // Mockups composite the clean preview onto a room plate. The preview
+  // already carries the QR badge so the mockup gets it for free in the
+  // bottom-right of the framed poster.
   const mockupOfficeBuffer = await buildMockup(previewBuffer, previewWidth, previewHeight, 'office');
   const mockupLivingBuffer = await buildMockup(previewBuffer, previewWidth, previewHeight, 'living');
   const mockupOfficeKey = await putBuffer('mockups', mockupOfficeBuffer, 'jpg');
@@ -135,6 +149,27 @@ export async function processMaster(
     widthPx: width,
     heightPx: height,
   };
+}
+
+// ---------- QR badge ----------
+
+/**
+ * Wrap a black-on-white QR PNG in a rounded "pill" so it visually
+ * detaches from the artwork and scans reliably on any background.
+ */
+async function buildQrBadge(qrPng: Buffer, qrSize: number): Promise<Buffer> {
+  const totalSize = qrSize + QR_PILL_PADDING * 2;
+  const radius = Math.round(QR_PILL_PADDING * 0.6);
+  const pillSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${totalSize}" height="${totalSize}">
+      <rect x="0" y="0" width="${totalSize}" height="${totalSize}"
+            rx="${radius}" ry="${radius}"
+            fill="#ffffff" fill-opacity="0.94"/>
+    </svg>`;
+  return sharp(Buffer.from(pillSvg))
+    .composite([{ input: qrPng, top: QR_PILL_PADDING, left: QR_PILL_PADDING }])
+    .png()
+    .toBuffer();
 }
 
 // ---------- Mockup composition ----------
@@ -201,56 +236,3 @@ async function buildMockup(
     .jpeg({ quality: 85, mozjpeg: true })
     .toBuffer();
 }
-
-/**
- * Rebuild derivatives from an already-uploaded master. Useful if the
- * watermark style changes and we need to regenerate for every poster.
- */
-export async function reprocessMaster(masterKey: string): Promise<PosterDerivatives> {
-  const ext = (path.extname(masterKey).replace(/^\./, '') || 'png') as 'png' | 'jpg';
-  const buffer = await readBuffer(masterKey);
-  // processMaster writes a NEW master key; for reprocess we keep the existing
-  // master and only regenerate derivatives. Inline the relevant bits:
-  const meta = await sharp(buffer).metadata();
-  const width = meta.width ?? 1856;
-  const height = meta.height ?? 2464;
-
-  const previewWidth = Math.min(2400, width);
-  const previewHeight = Math.round((height / width) * previewWidth);
-  const previewBuffer = await sharp(buffer)
-    .resize({ width: previewWidth, withoutEnlargement: true })
-    .composite([
-      { input: Buffer.from(diagonalWordmarkSvg(previewWidth, previewHeight)), top: 0, left: 0 },
-      { input: Buffer.from(cornerWordmarkSvg(previewWidth, previewHeight)), top: 0, left: 0 },
-    ])
-    .jpeg({ quality: 82, mozjpeg: true })
-    .toBuffer();
-  const previewKey = await putBuffer('previews', previewBuffer, 'jpg');
-
-  const thumbWidth = Math.min(800, width);
-  const thumbHeight = Math.round((height / width) * thumbWidth);
-  const thumbBuffer = await sharp(buffer)
-    .resize({ width: thumbWidth, withoutEnlargement: true })
-    .composite([
-      { input: Buffer.from(cornerWordmarkSvg(thumbWidth, thumbHeight)), top: 0, left: 0 },
-    ])
-    .jpeg({ quality: 82, mozjpeg: true })
-    .toBuffer();
-  const thumbnailKey = await putBuffer('thumbnails', thumbBuffer, 'jpg');
-
-  const mockupOfficeBuffer = await buildMockup(previewBuffer, previewWidth, previewHeight, 'office');
-  const mockupLivingBuffer = await buildMockup(previewBuffer, previewWidth, previewHeight, 'living');
-  const mockupOfficeKey = await putBuffer('mockups', mockupOfficeBuffer, 'jpg');
-  const mockupLivingKey = await putBuffer('mockups', mockupLivingBuffer, 'jpg');
-
-  return {
-    masterKey,
-    previewKey,
-    thumbnailKey,
-    mockupOfficeKey,
-    mockupLivingKey,
-    widthPx: width,
-    heightPx: height,
-  };
-}
-

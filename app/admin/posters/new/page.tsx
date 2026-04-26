@@ -58,23 +58,24 @@ async function createPoster(formData: FormData) {
   const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  let derivatives: Awaited<ReturnType<typeof processMaster>>;
-  try {
-    derivatives = await processMaster(buffer, ext);
-  } catch (err) {
-    console.error('processMaster failed', err);
-    failWith('Image processing failed — try a different file or check the master is at least 800px on the long edge.');
-  }
-
   const slug = slugify(title);
 
   // Block duplicate slugs proactively with a friendly message rather than
   // surfacing the Prisma P2002 unique-constraint error as a 500.
+  // Also lets us bake the slug into the QR before we run the pipeline.
   const existing = await prisma.poster.findUnique({ where: { slug } });
   if (existing) {
     failWith(
       `A poster with the title "${title}" already exists. Pick a different title (e.g. add the year, the angle, or a roman numeral).`,
     );
+  }
+
+  let derivatives: Awaited<ReturnType<typeof processMaster>>;
+  try {
+    derivatives = await processMaster(buffer, slug, ext);
+  } catch (err) {
+    console.error('processMaster failed', err);
+    failWith('Image processing failed — try a different file or check the master is at least 800px on the long edge.');
   }
 
   try {

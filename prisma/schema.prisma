@@ -197,6 +197,22 @@ model Subscriber {
   createdAt    DateTime @default(now())
 }
 
+// ---------- QR scan analytics ----------
+//
+// Every QR-stamped preview encodes /q/<slug>. The /q/[slug] route logs
+// each hit before redirecting to the product page. Gives a per-poster
+// signal on which images are travelling out into the wild.
+
+model QrScan {
+  id         String   @id @default(cuid())
+  posterSlug String
+  scannedAt  DateTime @default(now())
+  userAgent  String?
+  referrer   String?
+
+  @@index([posterSlug, scannedAt])
+}
+
 // ---------- Site settings ----------
 //
 // Single-row settings table — always use id="singleton". Accessed via
