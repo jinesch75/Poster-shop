@@ -164,6 +164,14 @@ const londonPosters: PosterSeed[] = [
     description:
       'The west facade and rose window — gothic stone caught between primary verticals.',
   },
+  {
+    slug: 'battersea',
+    title: 'Battersea',
+    number: 'N°20',
+    file: '/posters/battersea.png',
+    description:
+      'The four white chimneys of the power station above the Thames — industrial monument abstracted into linework and primaries.',
+  },
 ];
 
 const newYorkPosters: PosterSeed[] = [
@@ -206,6 +214,14 @@ const newYorkPosters: PosterSeed[] = [
     file: '/posters/chrysler.png',
     description:
       "Van Alen's stainless crown of 1930, drawn at street level with the avenue stretching beneath in primary colour.",
+  },
+  {
+    slug: 'statue-of-liberty',
+    title: 'Statue of Liberty',
+    number: 'N°21',
+    file: '/posters/statue-of-liberty.png',
+    description:
+      'Bartholdi’s copper figure on Liberty Island — torch raised against the harbour, drawn in line and held by primary blocks.',
   },
 ];
 
