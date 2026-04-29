@@ -228,6 +228,12 @@ const newYorkPosters: PosterSeed[] = [
 async function main() {
   console.log('Seeding cities...');
   for (const c of cities) {
+    // IMPORTANT: `update: {}` is intentional. This seed runs on every Railway
+    // deploy via the start script. If we re-applied the hardcoded values here,
+    // every deploy would silently revert any admin edit (status, statusLabel,
+    // name, description) back to whatever's in this file — which is exactly
+    // what was happening to Paris. Once a city row exists, the admin panel
+    // (/admin/cities) is the source of truth.
     await prisma.city.upsert({
       where: { slug: c.slug },
       create: {
@@ -238,13 +244,7 @@ async function main() {
         statusLabel: c.statusLabel,
         description: c.description,
       },
-      update: {
-        name: c.name,
-        number: c.number,
-        status: c.status,
-        statusLabel: c.statusLabel,
-        description: c.description,
-      },
+      update: {},
     });
   }
 
@@ -252,6 +252,9 @@ async function main() {
 
   console.log('Seeding London posters...');
   for (const p of londonPosters) {
+    // Same `update: {}` rule as cities — title/number/description are all
+    // admin-editable on /admin/posters/[id], so re-applying seed values on
+    // every deploy would clobber edits.
     await prisma.poster.upsert({
       where: { slug: p.slug },
       create: {
@@ -270,11 +273,7 @@ async function main() {
         status: PosterStatus.PUBLISHED,
         cityId: london.id,
       },
-      update: {
-        title: p.title,
-        number: p.number,
-        description: p.description,
-      },
+      update: {},
     });
   }
 
@@ -298,11 +297,7 @@ async function main() {
         status: PosterStatus.PUBLISHED,
         cityId: newYork.id,
       },
-      update: {
-        title: p.title,
-        number: p.number,
-        description: p.description,
-      },
+      update: {},
     });
   }
 
