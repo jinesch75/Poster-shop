@@ -548,6 +548,14 @@
   font-size: 14px;
 }
 
+/* "Add a city" form sits above the stack of existing cities — distinguish it
+   with a dashed border and breathing room before the next card. */
+.admin-city--new {
+  border-style: dashed;
+  background: var(--paper-warm);
+  margin-bottom: 32px;
+}
+
 /* ---- Login ---- */
 
 .admin-login {
