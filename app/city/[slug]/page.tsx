@@ -37,7 +37,7 @@ export async function generateMetadata({
   const city = await getCityBySlug(slug);
   if (!city) return {};
   return {
-    title: `${city.name} — Linework Studio`,
+    title: `${city.name} — Gridline Cities`,
     description:
       city.description ??
       `Architectural posters of ${city.name}, in line and the De Stijl palette.`,

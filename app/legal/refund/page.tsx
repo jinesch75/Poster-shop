@@ -7,8 +7,8 @@ import { LegalPage } from '@/components/LegalPage';
 import { LEGAL } from '@/lib/legal-info';
 
 export const metadata: Metadata = {
-  title: 'Refunds — Linework Studio',
-  description: 'When and how Linework Studio issues refunds for digital posters.',
+  title: 'Refunds — Gridline Cities',
+  description: 'When and how Gridline Cities issues refunds for digital posters.',
 };
 
 export default function RefundPage() {
@@ -21,7 +21,7 @@ export default function RefundPage() {
     >
       <h2>The default</h2>
       <p>
-        Linework Studio sells <strong>digital files for personal printing</strong>.
+        Gridline Cities sells <strong>digital files for personal printing</strong>.
         At checkout you expressly consent to immediate delivery of the file and
         acknowledge that this ends the statutory 14-day right of withdrawal for
         that item &mdash; this is the regime set out in EU Directive 2011/83/EU,

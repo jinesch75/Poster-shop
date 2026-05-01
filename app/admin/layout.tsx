@@ -29,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="admin-shell">
       <aside className="admin-nav">
         <div className="admin-nav__brand">
-          Linework <span className="studio-sub">Studio</span>
+          Gridline <span className="studio-sub">Cities</span>
           <span className="admin-nav__tag">Admin</span>
         </div>
         <nav className="admin-nav__links">

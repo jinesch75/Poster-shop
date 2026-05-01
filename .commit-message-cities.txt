@@ -1,0 +1,63 @@
+admin: 'Create city' form + stop seed clobbering admin edits
+
+Two related changes to the city/poster admin flow.
+
+1. /admin/cities — add a 'Create city' form
+-------------------------------------------
+
+The Cities page previously only let you edit the seeded cities
+(London, Paris, Rome, New York, Tokyo). You can now create new ones
+without touching the seed file.
+
+The form sits at the top of the page as a dashed-border card and
+asks for:
+
+* Display name (required) — slug is derived (Berlin → 'berlin',
+  São Paulo → 'sao-paulo'), matching the rule used by /admin/posters/new
+* Status — Available / In progress / Planned (default Planned, since
+  a fresh city has no posters)
+* Status label (optional, e.g. 'Summer 2027')
+* Description (optional)
+
+Number is auto-assigned to the next free 0N. Duplicate slug → friendly
+inline error redirect (?error=…), same pattern as the poster upload
+page. Successful create → ?created=<slug> → green banner and the new
+city's edit card renders right underneath ready for further tweaking.
+
+The home page and shop already enumerate cities dynamically via
+getCities(), so new cities appear automatically — they render the
+'Pictures to come' band until at least one published poster exists.
+
+2. prisma/seed.ts — empty `update` blocks on upsert
+---------------------------------------------------
+
+Bug: every Railway deploy re-runs prisma/seed.ts via the start
+script. The upsert blocks for both City and Poster had `update: {…}`
+entries that re-applied the hardcoded seed values (status,
+statusLabel, name, description for City; title, number, description
+for Poster) on every deploy. So:
+
+* Setting Paris to AVAILABLE in /admin/cities reverted to IN_PROGRESS
+  on the next deploy — making the city block hide its 2 posters and
+  show 'Pictures to come' on the homepage instead.
+* Editing a London/New-York poster's title or description in the
+  admin would similarly silently revert.
+
+Fix: change both upsert `update` blocks to `update: {}`. The seed
+now only sets these fields on first insert; once a row exists, the
+admin panel is the source of truth. Comment added in seed.ts
+explaining the rationale.
+
+Post-deploy: open /admin/cities and set Paris → Available again
+(the bad state is currently in the database). The setting will now
+stick across redeploys.
+
+Files
+-----
+* app/admin/cities/page.tsx — slugify(), nextCityNumber(), createCity()
+  server action, error/success banners, new-city form, searchParams
+  plumbing.
+* app/admin.css — .admin-city--new modifier (dashed border, warm
+  paper background, 32px bottom margin).
+* prisma/seed.ts — empty `update: {}` blocks on city + both poster
+  upserts; explanatory comments.

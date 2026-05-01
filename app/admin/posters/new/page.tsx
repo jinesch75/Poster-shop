@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { processMaster } from '@/lib/watermark';
 import { PosterUploadSchema, firstError } from '@/lib/validation';
 
-export const metadata = { title: 'Upload poster — Linework Studio Admin' };
+export const metadata = { title: 'Upload poster — Gridline Cities Admin' };
 export const dynamic = 'force-dynamic';
 
 function slugify(input: string): string {

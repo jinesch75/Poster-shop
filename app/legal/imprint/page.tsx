@@ -7,8 +7,8 @@ import { LegalPage } from '@/components/LegalPage';
 import { LEGAL, legalValue } from '@/lib/legal-info';
 
 export const metadata: Metadata = {
-  title: 'Imprint — Linework Studio',
-  description: 'Legal notice and trader information for Linework Studio.',
+  title: 'Imprint — Gridline Cities',
+  description: 'Legal notice and trader information for Gridline Cities.',
 };
 
 function Value({ value, placeholder }: { value: string | null; placeholder: string }) {
@@ -25,7 +25,7 @@ export default function ImprintPage() {
     <LegalPage
       eyebrow="Legal notice"
       title="Imprint"
-      lede="Identity of the trader behind Linework Studio, as required under EU e-commerce law."
+      lede="Identity of the trader behind Gridline Cities, as required under EU e-commerce law."
       lastUpdated="23 April 2026"
     >
       <h2>Trader</h2>

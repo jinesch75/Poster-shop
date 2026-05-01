@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 
-export const metadata = { title: 'Checkout cancelled — Linework Studio' };
+export const metadata = { title: 'Checkout cancelled — Gridline Cities' };
 
 export default function CheckoutCancelPage() {
   return (

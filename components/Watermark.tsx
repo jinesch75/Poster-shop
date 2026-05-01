@@ -1,5 +1,5 @@
 /**
- * Diagonal repeating "LINEWORK · STUDIO" watermark overlay.
+ * Diagonal repeating "GRIDLINE · CITIES" watermark overlay.
  * Used on every poster preview (cards, hero, product page) so customers
  * can't just screen-grab the artwork. In Session 2 this rendering will
  * be baked into the uploaded preview files via Sharp server-side, so
@@ -14,7 +14,7 @@ type WatermarkProps = {
 };
 
 const WM_TEXT =
-  'LINEWORK · STUDIO · LINEWORK · STUDIO · LINEWORK · STUDIO · LINEWORK · STUDIO';
+  'GRIDLINE · CITIES · GRIDLINE · CITIES · GRIDLINE · CITIES · GRIDLINE · CITIES';
 
 export function Watermark({ lines = 9, fontSize }: WatermarkProps) {
   return (

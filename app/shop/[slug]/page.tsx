@@ -37,7 +37,7 @@ export async function generateMetadata({
   const poster = await getPosterBySlug(slug);
   if (!poster) return {};
   return {
-    title: `${poster.title} — Linework Studio`,
+    title: `${poster.title} — Gridline Cities`,
     description: poster.description,
   };
 }
@@ -168,7 +168,7 @@ export default async function ProductPage({
             <p className="fine-print">
               Digital download · High-resolution PNG · Link valid for 48 hours,
               up to 5 downloads. Lost your file? Email{' '}
-              <a href="mailto:hello@linework.studio">hello@linework.studio</a>{' '}
+              <a href="mailto:hello@gridlinecities.com">hello@gridlinecities.com</a>{' '}
               and we&apos;ll reissue it.
             </p>
           </div>

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { ADMIN_COOKIE, ADMIN_COOKIE_MAX_AGE, signAdminToken, verifyAdminPassword, verifyAdminToken } from '@/lib/auth';
 
 export const metadata = {
-  title: 'Sign in — Linework Studio Admin',
+  title: 'Sign in — Gridline Cities Admin',
 };
 
 async function login(formData: FormData) {
@@ -42,7 +42,7 @@ export default async function AdminLoginPage({
     <main className="admin-login">
       <div className="admin-login__card">
         <div className="admin-login__brand">
-          Linework <span className="studio-sub">Studio</span>
+          Gridline <span className="studio-sub">Cities</span>
         </div>
         <p className="admin-login__label">Admin access</p>
         <form action={login}>

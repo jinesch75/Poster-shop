@@ -74,7 +74,7 @@ const londonPosters: PosterSeed[] = [
     number: 'N°03',
     file: '/posters/tower-bridge.png',
     description:
-      'Twin Gothic towers against the Thames — architectural linework and primary-color blocks.',
+      'Twin Gothic towers against the Thames — architectural line drawings and primary-color blocks.',
   },
   {
     slug: 'st-pauls',
@@ -106,7 +106,7 @@ const londonPosters: PosterSeed[] = [
     number: 'N°07',
     file: '/posters/westminster-abbey.png',
     description:
-      'Gothic architecture abstracted into linework and block — eight centuries of stone in four colours.',
+      'Gothic architecture abstracted into line drawings and block — eight centuries of stone in four colours.',
   },
   {
     slug: 'the-riverline',
@@ -138,7 +138,7 @@ const londonPosters: PosterSeed[] = [
     number: 'N°16',
     file: '/posters/tower-bridge-ii.png',
     description:
-      "The bridge's northern tower in close detail — Victorian Gothic in linework, red holding the upper deck.",
+      "The bridge's northern tower in close detail — Victorian Gothic in line drawings, red holding the upper deck.",
   },
   {
     slug: 'st-pauls-ii',
@@ -170,7 +170,7 @@ const londonPosters: PosterSeed[] = [
     number: 'N°20',
     file: '/posters/battersea.png',
     description:
-      'The four white chimneys of the power station above the Thames — industrial monument abstracted into linework and primaries.',
+      'The four white chimneys of the power station above the Thames — industrial monument abstracted into line drawings and primaries.',
   },
 ];
 

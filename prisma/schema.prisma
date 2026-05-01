@@ -1,4 +1,4 @@
-// Linework Studio — Prisma schema
+// Gridline Cities — Prisma schema
 // Session 2: models for the full v1 surface.
 // Print-related fields on Poster/PosterSize are present but unused in v1
 // (digital-only). They're here so v2 print support is additive, not a migration.

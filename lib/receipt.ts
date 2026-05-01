@@ -52,7 +52,7 @@ export async function sendReceiptEmail(args: SendReceiptArgs) {
     : absoluteUrl(`/shop`);
 
   const items = order.items.map((item) => ({
-    title: item.poster?.title ?? 'Linework Studio poster',
+    title: item.poster?.title ?? 'Gridline Cities poster',
     number: item.poster?.number ?? '',
     cityName: item.poster?.city?.name ?? null,
     downloadUrl: item.downloadToken
@@ -71,8 +71,8 @@ export async function sendReceiptEmail(args: SendReceiptArgs) {
   });
 
   const subject = args.isReissue
-    ? 'Your Linework Studio download links — refreshed'
-    : 'Your Linework Studio order — ready to download';
+    ? 'Your Gridline Cities download links — refreshed'
+    : 'Your Gridline Cities order — ready to download';
 
   return sendEmail({
     to: args.to,

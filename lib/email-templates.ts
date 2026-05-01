@@ -60,7 +60,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
             <tr>
               <td style="padding-bottom:32px;">
                 <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#2a2724;letter-spacing:0.02em;">
-                  Linework <em style="font-style:italic;color:#86807a;">Studio</em>
+                  Gridline <em style="font-style:italic;color:#86807a;">Cities</em>
                 </div>
               </td>
             </tr>
@@ -100,7 +100,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
             </tr>
             <tr>
               <td style="padding-top:24px;border-top:1px solid #ece7df;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;color:#86807a;line-height:1.6;">
-                Linework Studio &middot; Architectural posters, Luxembourg.<br/>
+                Gridline Cities &middot; Architectural posters, Luxembourg.<br/>
                 Digital goods are non-refundable once the files have been downloaded.
               </td>
             </tr>
@@ -112,7 +112,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
 </html>`;
 
   const text = [
-    `Linework Studio — Order ${data.orderShortId}`,
+    `Gridline Cities — Order ${data.orderShortId}`,
     ``,
     `Your poster${data.items.length > 1 ? 's are' : ' is'} ready to download.`,
     ``,
@@ -130,7 +130,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
     `  ${data.orderUrl}`,
     `or email ${data.supportEmail} and we'll re-issue it.`,
     ``,
-    `— Linework Studio · Luxembourg`,
+    `— Gridline Cities · Luxembourg`,
     `Digital goods are non-refundable once the files have been downloaded.`,
   ].join('\n');
 

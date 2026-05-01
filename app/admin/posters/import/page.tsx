@@ -21,18 +21,18 @@ import { processMaster } from '@/lib/watermark';
 import { QuickUploadDropzone } from '@/components/QuickUploadDropzone';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Import posters — Linework Studio Admin' };
+export const metadata = { title: 'Import posters — Gridline Cities Admin' };
 
 const VALID_EXTS = new Set(['.png', '.jpg', '.jpeg']);
 
 const DEFAULT_DESCRIPTION_BY_CITY: Record<string, string> = {
   london:
-    'Architectural linework and primary blocks — drawn in the spirit of De Stijl.',
-  'new-york': 'Drawn from Manhattan, in linework and primary colour.',
+    'Architectural line drawings and primary blocks — drawn in the spirit of De Stijl.',
+  'new-york': 'Drawn from Manhattan, in line drawings and primary colour.',
   paris:
-    'Parisian architecture, distilled to linework and primary blocks in the De Stijl tradition.',
-  rome: 'The Eternal City, in clean linework and primary colour blocks.',
-  tokyo: 'Tokyo architecture, reduced to linework and primary blocks.',
+    'Parisian architecture, distilled to line drawings and primary blocks in the De Stijl tradition.',
+  rome: 'The Eternal City, in clean line drawings and primary colour blocks.',
+  tokyo: 'Tokyo architecture, reduced to line drawings and primary blocks.',
 };
 
 type Candidate = {
@@ -182,7 +182,7 @@ async function runImport(): Promise<void> {
           number,
           description:
             DEFAULT_DESCRIPTION_BY_CITY[c.citySlug] ??
-            'Architectural linework and primary blocks.',
+            'Architectural line drawings and primary blocks.',
           cityId,
           masterKey: derivatives.masterKey,
           previewKey: derivatives.previewKey,
@@ -281,7 +281,7 @@ async function runQuickUpload(formData: FormData): Promise<void> {
           number,
           description:
             DEFAULT_DESCRIPTION_BY_CITY[citySlug] ??
-            'Architectural linework and primary blocks.',
+            'Architectural line drawings and primary blocks.',
           cityId,
           masterKey: derivatives.masterKey,
           previewKey: derivatives.previewKey,

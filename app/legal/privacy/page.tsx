@@ -6,8 +6,8 @@ import { LegalPage } from '@/components/LegalPage';
 import { LEGAL, legalValue } from '@/lib/legal-info';
 
 export const metadata: Metadata = {
-  title: 'Privacy — Linework Studio',
-  description: 'How Linework Studio handles your personal data under GDPR.',
+  title: 'Privacy — Gridline Cities',
+  description: 'How Gridline Cities handles your personal data under GDPR.',
 };
 
 export default function PrivacyPage() {
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
     <LegalPage
       eyebrow="Privacy policy"
       title="Privacy policy"
-      lede="What personal data Linework Studio collects, why we collect it, and the rights you have over it under the EU General Data Protection Regulation."
+      lede="What personal data Gridline Cities collects, why we collect it, and the rights you have over it under the EU General Data Protection Regulation."
       lastUpdated="23 April 2026"
     >
       <h2>1. Who is the data controller</h2>

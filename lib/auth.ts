@@ -9,7 +9,7 @@
 
 import { SignJWT, jwtVerify } from 'jose';
 
-const COOKIE_NAME = 'linework_admin';
+const COOKIE_NAME = 'gridline_cities_admin';
 const ALG = 'HS256';
 
 function secretKey(): Uint8Array {

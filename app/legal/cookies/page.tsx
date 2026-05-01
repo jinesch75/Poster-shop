@@ -8,8 +8,8 @@ import { LegalPage } from '@/components/LegalPage';
 import { LEGAL } from '@/lib/legal-info';
 
 export const metadata: Metadata = {
-  title: 'Cookies — Linework Studio',
-  description: 'What cookies Linework Studio uses and why.',
+  title: 'Cookies — Gridline Cities',
+  description: 'What cookies Gridline Cities uses and why.',
 };
 
 export default function CookiesPage() {
@@ -22,7 +22,7 @@ export default function CookiesPage() {
     >
       <h2>Our approach</h2>
       <p>
-        Linework Studio only uses cookies that are strictly necessary for the
+        Gridline Cities only uses cookies that are strictly necessary for the
         Site to work. We do not use advertising cookies, analytics cookies, or
         cross-site tracking. Because all of our cookies fall under the
         &ldquo;strictly necessary&rdquo; exemption of the ePrivacy Directive,
@@ -63,7 +63,7 @@ export default function CookiesPage() {
           Stripe&rsquo;s cookie policy
         </a>{' '}
         and set in your browser when you&rsquo;re on <code>checkout.stripe.com</code>,
-        not on Linework Studio.
+        not on Gridline Cities.
       </p>
 
       <h2>Changing your mind</h2>

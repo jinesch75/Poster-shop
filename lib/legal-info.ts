@@ -10,9 +10,9 @@ export const LEGAL = {
   name: 'Jacques Brosius',
   /**
    * Trading name shown on the site. Sole trader does business as
-   * "Linework Studio" but the legal identity is the natural person.
+   * "Gridline Cities" but the legal identity is the natural person.
    */
-  tradingName: 'Linework Studio',
+  tradingName: 'Gridline Cities',
   /** "Luxembourg" alone isn't enough for compliance — this is flagged. */
   country: 'Luxembourg',
   /**

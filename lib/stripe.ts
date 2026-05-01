@@ -25,7 +25,7 @@ export function stripe(): Stripe {
   client = new Stripe(key, {
     apiVersion: '2025-02-24.acacia',
     appInfo: {
-      name: 'Linework Studio',
+      name: 'Gridline Cities',
       version: '0.2.0',
     },
     // Small retry for transient network errors; Checkout creates are idempotent

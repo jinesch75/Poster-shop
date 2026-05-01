@@ -6,7 +6,7 @@ export function Nav() {
   return (
     <nav className="top">
       <Link href="/" className="wordmark">
-        Linework <span className="studio-sub">Studio</span>
+        Gridline <span className="studio-sub">Cities</span>
       </Link>
       <div className="links">
         <Link href="/shop">Shop</Link>

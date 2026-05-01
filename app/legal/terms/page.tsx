@@ -6,8 +6,8 @@ import { LegalPage } from '@/components/LegalPage';
 import { LEGAL } from '@/lib/legal-info';
 
 export const metadata: Metadata = {
-  title: 'Terms — Linework Studio',
-  description: 'Terms of sale for digital posters at Linework Studio.',
+  title: 'Terms — Gridline Cities',
+  description: 'Terms of sale for digital posters at Gridline Cities.',
 };
 
 export default function TermsPage() {
@@ -15,12 +15,12 @@ export default function TermsPage() {
     <LegalPage
       eyebrow="Terms of sale"
       title="Terms & conditions"
-      lede="The terms on which Linework Studio sells digital posters to customers in the European Union and beyond."
+      lede="The terms on which Gridline Cities sells digital posters to customers in the European Union and beyond."
       lastUpdated="23 April 2026"
     >
       <h2>1. Who we are</h2>
       <p>
-        These terms govern your use of linework.studio (the &ldquo;Site&rdquo;) and
+        These terms govern your use of gridlinecities.com (the &ldquo;Site&rdquo;) and
         any purchases you make from it. The Site is operated by{' '}
         <strong>{LEGAL.name}</strong>, trading as <strong>{LEGAL.tradingName}</strong>,
         established in {LEGAL.country}. Full trader details are listed on the{' '}

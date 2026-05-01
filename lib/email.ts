@@ -8,7 +8,7 @@
 // Env contract:
 //   BREVO_API_KEY            — v3 key from Brevo → Settings → SMTP & API
 //   BREVO_SENDER_EMAIL       — verified sender (single-sender or domain)
-//   BREVO_SENDER_NAME        — "Linework Studio"
+//   BREVO_SENDER_NAME        — "Gridline Cities"
 //   BREVO_NEWSLETTER_LIST_ID — numeric Brevo list id (e.g. 3)
 //
 // Missing env in production means we *log and no-op* rather than throwing,
@@ -45,7 +45,7 @@ export type SendEmailResult =
 function brevoEnv() {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
-  const senderName = process.env.BREVO_SENDER_NAME || 'Linework Studio';
+  const senderName = process.env.BREVO_SENDER_NAME || 'Gridline Cities';
   if (!apiKey || !senderEmail) {
     return { ok: false as const, reason: 'BREVO_API_KEY or BREVO_SENDER_EMAIL not set' };
   }

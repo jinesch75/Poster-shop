@@ -1,4 +1,4 @@
-# Linework Studio
+# Gridline Cities
 
 Online shop for architectural posters in a De Stijl / Piet Mondrian-inspired style. Launching with London; extending to Paris, Rome, New York, and other capitals.
 
@@ -16,7 +16,7 @@ Online shop for architectural posters in a De Stijl / Piet Mondrian-inspired sty
 - Prisma + Postgres schema covering cities, posters, bundles, customers, orders, subscribers
 - Storage abstraction at `lib/storage.ts` — Railway volume in prod, `./uploads` locally
 - Streaming route at `/api/storage/[...key]` (masters blocked until signed URLs in Session 4)
-- Sharp-based watermark pipeline at `lib/watermark.ts` — one master → private copy + thumbnail + preview (diagonal "LINEWORK · STUDIO" overlay) + two room mockups
+- Sharp-based watermark pipeline at `lib/watermark.ts` — one master → private copy + thumbnail + preview (diagonal "GRIDLINE · CITIES" overlay) + two room mockups
 - Admin panel at `/admin` gated by `ADMIN_PASSWORD` env var (signed JWT cookie via `jose`, edge-safe middleware)
 - Admin screens: dashboard, posters list/new/edit, cities editor
 - Seed script at `prisma/seed.ts` ports the 8 London posters into the DB
@@ -33,7 +33,7 @@ Online shop for architectural posters in a De Stijl / Piet Mondrian-inspired sty
 Requires Node.js 20+ and a Postgres instance (Docker works: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:16`).
 
 ```bash
-cd linework-studio
+cd gridline-cities
 cp .env.example .env.local   # then edit DATABASE_URL, AUTH_SECRET, ADMIN_PASSWORD
 npm install
 npm run db:push              # creates tables from prisma/schema.prisma
@@ -50,7 +50,7 @@ Then open http://localhost:3000 (public site) or http://localhost:3000/admin (ad
 1. Push this folder to a GitHub repo (see "Push to GitHub" below).
 2. In Railway, create a new project → "Deploy from GitHub repo" → select the repo.
 3. Railway auto-detects Next.js. It will run `npm run build` then `npm start`.
-4. Railway's default subdomain will work immediately (e.g. `linework-studio.up.railway.app`).
+4. Railway's default subdomain will work immediately (e.g. `gridline-cities.up.railway.app`).
 5. When you're ready for a custom domain, add it in Railway's settings and point your DNS there.
 
 Environment variables — for now the app runs without any. Session 2 onwards will need the variables in `.env.example` (database URL, Stripe keys, etc.).
@@ -59,7 +59,7 @@ Environment variables — for now the app runs without any. Session 2 onwards wi
 
 ## Push to GitHub
 
-From this `linework-studio` folder:
+From this `gridline-cities` folder:
 
 ```bash
 git init
@@ -67,7 +67,7 @@ git add .
 git commit -m "Initial scaffold: Next.js 15 + design system + homepage"
 
 # Create a new empty repo at github.com first, then:
-git remote add origin https://github.com/YOUR-USERNAME/linework-studio.git
+git remote add origin https://github.com/YOUR-USERNAME/gridline-cities.git
 git branch -M main
 git push -u origin main
 ```
@@ -77,7 +77,7 @@ git push -u origin main
 ## Project structure
 
 ```
-linework-studio/
+gridline-cities/
 ├── app/
 │   ├── layout.tsx           Root layout — loads fonts, sets metadata
 │   ├── page.tsx             Homepage — hero, gallery, cities, mockups, manifesto, newsletter
@@ -85,7 +85,7 @@ linework-studio/
 │   └── shop/[slug]/page.tsx Product detail page (basic, checkout TBD)
 ├── components/
 │   ├── PosterCard.tsx       Gallery card — image + watermark + metadata
-│   └── Watermark.tsx        Diagonal "LINEWORK · STUDIO" overlay
+│   └── Watermark.tsx        Diagonal "GRIDLINE · CITIES" overlay
 ├── lib/
 │   ├── fonts.ts             next/font setup for Outfit and Manrope
 │   └── posters.ts           Seed data — 8 London posters + 5 cities
@@ -116,7 +116,7 @@ linework-studio/
 
 **Emphasis** — the `.italic` class no longer means italic. It means "accent-color emphasis word" (used on the trailing word of hero headlines and section titles). This keeps the design calm and Scandinavian rather than decorative.
 
-**Wordmark** — "Linework" in 600-weight + "Studio" (in `.studio-sub` class) in 300-weight muted grey. Used in both the nav and the footer.
+**Wordmark** — "Gridline" in 600-weight + "Cities" (in `.studio-sub` class) in 300-weight muted grey. Used in both the nav and the footer.
 
 ---
 

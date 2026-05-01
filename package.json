@@ -1,8 +1,8 @@
 {
-  "name": "linework-studio",
+  "name": "gridline-cities",
   "version": "0.2.0",
   "private": true,
-  "description": "Linework Studio — online shop for architectural posters in a De Stijl / Mondrian-inspired style",
+  "description": "Gridline Cities — online shop for architectural posters in a De Stijl / Mondrian-inspired style",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

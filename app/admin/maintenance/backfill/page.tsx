@@ -21,7 +21,7 @@ import { putBuffer } from '@/lib/storage';
 import { reprocessMaster } from '@/lib/watermark';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Backfill — Linework Studio Admin' };
+export const metadata = { title: 'Backfill — Gridline Cities Admin' };
 
 type RowResult = {
   slug: string;

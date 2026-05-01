@@ -1,25 +1,95 @@
-import: add browser drag-and-drop upload alongside the git path
+Rebrand: Linework Studio → Gridline Cities
 
-The /admin/posters/import page now offers two parallel paths:
+The name "Linework Studio" was already in use by an existing
+architecture-illustration site at linework-studio.com. To avoid a
+brand-confusion / SEO fight from launch day, the shop is being renamed
+to Gridline Cities. Domain gridlinecities.com purchased on Porkbun
+2026-05-01.
 
-* Quick upload (new): a drag-and-drop dropzone + city dropdown.
-  Files go straight to the volume via a server action — no commit,
-  no Railway redeploy. 50 MB cap per file (matches the existing
-  next.config.mjs serverActions.bodySizeLimit). Use this for one
-  or two iterations.
+This commit is the codebase rebrand sweep (Phase 1 of the rename
+migration). It is intentionally string-only — no behavioural changes.
 
-* From incoming/ (existing): drop into incoming/<city-slug>/, push,
-  redeploy, click "Import N files". Originals live in commit
-  history. Use this for big batches.
+Changes:
 
-Both paths run files through the same processMaster pipeline,
-create DRAFT posters with auto-generated metadata, and report a
-unified per-file results table.
+  Wordmark (3 files)        Nav, admin layout, admin login.
+                            "Linework <span>Studio</span>" becomes
+                            "Gridline <span>Cities</span>". CSS class
+                            name `studio-sub` is now stylistically
+                            misnamed but functional — rename to
+                            `wordmark-sub` deferred as cosmetic follow-up.
 
-Files:
-* components/QuickUploadDropzone.tsx — client component, drag/drop
-  + visual states + per-file rejections (wrong type / over 50MB)
-  + remove buttons before submit.
-* app/admin/posters/import/page.tsx — runQuickUpload server action
-  + UI section above the existing git-based section.
-* app/admin.css — .quick-upload__* styles.
+  Page titles & metadata    All <title> tags, OpenGraph titles, and
+  (~12 files)               meta descriptions updated. Affects every
+                            public page, admin page, and legal page.
+
+  Legal pages (6 files)     Privacy, Terms, Refund, Imprint, Cookies,
+                            Licence — body copy updated.
+                            Terms also references the Site by domain;
+                            "linework.studio" → "gridlinecities.com".
+
+  Email + Stripe identity   lib/email-templates.ts (footer, subject,
+  (3 files)                 signoff, HTML wordmark), lib/receipt.ts
+                            (subject lines, item-title fallback),
+                            lib/stripe.ts (Stripe Checkout merchant
+                            name).
+
+  Configuration             lib/legal-info.ts (tradingName), lib/email.ts
+  (3 files)                 (sender-name fallback), .env.example
+                            (NEXT_PUBLIC_SITE_NAME, BREVO_SENDER_NAME,
+                            AUTH_EMAIL_FROM).
+
+  Domain references         shop product page mailto link, terms page
+  (2 files)                 site reference.
+
+  Repo metadata             package.json + package-lock.json (`name`
+  (3 files)                 field "linework-studio" → "gridline-cities",
+                            description), README.md (brand mentions,
+                            example folder name, sample git remote URL).
+
+  Footer + signoff          Footer ©, About manifesto signoff.
+  (2 files)
+
+  Comments / non-rendered   Header comments in globals.css,
+  (5 files)                 schema.prisma, robots.txt, legal-info.ts,
+                            email.ts.
+
+  Descriptor cleanup        The lowercase technique-word "linework"
+                            (e.g. "architectural linework and primary
+                            blocks") replaced with "line drawings"
+                            across prisma/seed.ts and the admin import
+                            page's per-city default descriptions.
+                            Reads naturally and removes the brand echo.
+
+  Admin auth cookie         lib/auth.ts COOKIE_NAME changed from
+                            'linework_admin' to 'gridline_cities_admin'.
+                            Existing admin sessions will be invalidated
+                            on deploy — sign in again post-deploy.
+
+Intentionally NOT changed:
+
+  Storage volume path       lib/storage.ts still resolves to /data/linework
+                            in production. The Railway persistent volume
+                            is mounted at that path and contains all
+                            21 currently-seeded posters; renaming the
+                            mount would orphan them. Leaving as a
+                            stable internal path; not a brand surface.
+
+  Watermark component       components/Watermark.tsx text updated for
+                            consistency, but the component is dead code
+                            (no longer used after the QR-code image
+                            protection rebuild) and is safe to delete
+                            in a follow-up.
+
+Out of scope (separate phases):
+
+  - DNS at Porkbun → Railway custom domain
+  - Brevo: domain verification (DKIM, Brevo Code, DMARC); rename
+    newsletter list "Linework Studio" → "Gridline Cities" in dashboard
+  - Railway env vars: BREVO_SENDER_EMAIL, BREVO_SENDER_NAME,
+    NEXT_PUBLIC_SITE_NAME (and any *_SITE_URL var) need updating
+  - QR re-stamp via /admin/maintenance/backfill once new domain is live
+  - Stripe dashboard: business display name "Linework Studio" → "Gridline Cities"
+  - Optional: rename GitHub repo + local folder linework-studio → gridline-cities
+  - New logo/favicon (current wordmark is CSS-rendered text, no image
+    asset to swap, so nothing required for this commit; design refresh
+    can come later)

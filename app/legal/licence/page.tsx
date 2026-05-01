@@ -6,8 +6,8 @@ import { LegalPage } from '@/components/LegalPage';
 import { LEGAL } from '@/lib/legal-info';
 
 export const metadata: Metadata = {
-  title: 'Licence — Linework Studio',
-  description: 'What you may and may not do with a Linework Studio poster file.',
+  title: 'Licence — Gridline Cities',
+  description: 'What you may and may not do with a Gridline Cities poster file.',
 };
 
 export default function LicencePage() {
@@ -49,7 +49,7 @@ export default function LicencePage() {
       <p>
         Credit is not required for personal prints at home. For any published
         use (press, editorial, social media post about the print hanging
-        somewhere), &ldquo;Poster by Linework Studio&rdquo; is appreciated.
+        somewhere), &ldquo;Poster by Gridline Cities&rdquo; is appreciated.
       </p>
 
       <h2>Ownership</h2>

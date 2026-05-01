@@ -23,7 +23,7 @@ export function Footer() {
         <span className="sep">·</span>
         <Link href="/legal/imprint">Imprint</Link>
         <span className="sep">·</span>
-        <span>© 2026 Linework Studio</span>
+        <span>© 2026 Gridline Cities</span>
       </div>
     </footer>
   );

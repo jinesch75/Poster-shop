@@ -1,4 +1,4 @@
-# Linework Studio — robots policy
+# Gridline Cities — robots policy
 # Block crawlers from admin, internal API, and the QR redirect endpoint.
 # Sitemap line points at the dynamic sitemap route in app/sitemap.ts.
 

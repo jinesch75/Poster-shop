@@ -2,7 +2,7 @@ import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 
 export const metadata = {
-  title: 'About · Linework Studio',
+  title: 'About · Gridline Cities',
   description:
     'Architectural posters where line meets the De Stijl palette — a small Luxembourg studio.',
 };
@@ -39,7 +39,7 @@ export default function AboutPage() {
           </p>
           <div className="sig">
             <span className="line"></span>
-            <span>Linework Studio · Luxembourg</span>
+            <span>Gridline Cities · Luxembourg</span>
           </div>
         </div>
       </section>
