@@ -18,6 +18,7 @@
 // batch.
 
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { prisma } from '@/lib/prisma';
@@ -27,11 +28,35 @@ import { reprocessMaster } from '@/lib/watermark';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Backfill — Gridline Cities Admin' };
 
+// Short-lived cookie that carries the per-poster result rows from a
+// just-finished action through the post-action redirect. Stored in a
+// cookie rather than a URL query param so big reports (21+ posters)
+// don't blow past Railway's edge URL/timeout limits — which 503'd
+// the original implementation. Expires automatically after 5 minutes.
+const REPORT_COOKIE = 'maintenance_report';
+const REPORT_COOKIE_TTL_SECONDS = 300;
+
 type RowResult = {
   slug: string;
   status: 'migrated' | 'restamped' | 'skipped' | 'failed';
   detail?: string;
 };
+
+function encodeReport(results: RowResult[]): string {
+  return results
+    .map((r) => `${r.slug}|${r.status}${r.detail ? '|' + r.detail : ''}`)
+    .join(',');
+}
+
+async function persistReport(results: RowResult[]): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(REPORT_COOKIE, encodeURIComponent(encodeReport(results)), {
+    path: '/admin/maintenance/backfill',
+    httpOnly: true,
+    sameSite: 'strict',
+    maxAge: REPORT_COOKIE_TTL_SECONDS,
+  });
+}
 
 async function runBackfill(): Promise<void> {
   'use server';
@@ -86,13 +111,8 @@ async function runBackfill(): Promise<void> {
     }
   }
 
-  // Persist the report on the URL so the page can render it after the
-  // redirect. (Long reports are truncated by the URL length limit but
-  // 21 posters' worth fits comfortably.)
-  const summary = results
-    .map((r) => `${r.slug}|${r.status}${r.detail ? '|' + r.detail : ''}`)
-    .join(',');
-  redirect(`/admin/maintenance/backfill?report=${encodeURIComponent(summary)}`);
+  await persistReport(results);
+  redirect('/admin/maintenance/backfill');
 }
 
 async function runRestamp(): Promise<void> {
@@ -144,10 +164,8 @@ async function runRestamp(): Promise<void> {
     }
   }
 
-  const summary = results
-    .map((r) => `${r.slug}|${r.status}${r.detail ? '|' + r.detail : ''}`)
-    .join(',');
-  redirect(`/admin/maintenance/backfill?report=${encodeURIComponent(summary)}`);
+  await persistReport(results);
+  redirect('/admin/maintenance/backfill');
 }
 
 function parseReport(raw: string | undefined): RowResult[] {
@@ -165,13 +183,16 @@ function parseReport(raw: string | undefined): RowResult[] {
     .filter((r) => r.slug && r.status);
 }
 
-export default async function BackfillPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ report?: string }>;
-}) {
-  const { report } = await searchParams;
-  const results = parseReport(report);
+export default async function BackfillPage() {
+  // Read the most recent run's results from the cookie set by
+  // runBackfill / runRestamp. Cookie expires after 5 minutes so the
+  // page eventually goes back to a clean "no last run" state on its own.
+  const cookieStore = await cookies();
+  const reportCookie = cookieStore.get(REPORT_COOKIE);
+  const reportRaw = reportCookie?.value
+    ? decodeURIComponent(reportCookie.value)
+    : undefined;
+  const results = parseReport(reportRaw);
 
   // Pre-scan so the operator can see what's pending before running.
   const pending = await prisma.poster.count({

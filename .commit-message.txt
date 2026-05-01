@@ -1,37 +1,44 @@
-admin: add QR re-stamp action to maintenance backfill page
+admin: persist backfill report via cookie, not URL query string
 
-The /admin/maintenance/backfill page previously only handled the
-one-time migration of seeded `public:` masters onto the Railway volume.
-After the rebrand to Gridline Cities (with the new domain
-gridlinecities.com), every existing poster's preview still carries a QR
-code that encodes the old Railway URL — but the existing backfill skips
-any volume-backed poster, so it can't be reused for this purpose.
+The previous implementation stuffed every per-poster result row into the
+post-action redirect URL as `?report=<encoded>`. That worked fine for
+small runs but 503'd at production scale: a 21-poster re-stamp produced
+a redirect URL ~1.5 KB long, and Railway's edge timed out (or rejected
+the request) before Next.js could render the result page. The action
+itself completed successfully — only the result-table view was broken.
 
-This commit adds a second server action `runRestamp` and a second card
-on the same page. The new action walks every volume-backed poster,
-calls reprocessMaster() on its existing master to regenerate previews +
-thumbnails + mockups, and writes the new derivative keys back to the
-DB. The QR badge encodes qrTargetUrl(slug), which reads from
-NEXT_PUBLIC_SITE_URL — so with that env var now set to
-https://gridlinecities.com, re-stamped posters get fresh QR codes
-pointing at the new domain.
+This commit moves the report payload off the URL and into a short-lived
+HTTP cookie. The flow is now:
 
-The original migration action stays untouched in case any future poster
-ever lands on the `public:` prefix again.
+  1. Action finishes → set `maintenance_report` cookie (httpOnly,
+     SameSite=strict, path-scoped to /admin/maintenance/backfill, 5-min
+     max-age) carrying the same encoded summary string the URL used to.
+  2. Action issues a clean `redirect('/admin/maintenance/backfill')`.
+  3. Page Server Component reads the cookie via `cookies()` from
+     next/headers, parses, renders the existing results table.
 
-Page layout now has two cards:
+No behavioural changes for the user: identical result table, identical
+status counts, identical per-row layout. The cookie expires on its own
+after 5 minutes, so a stale browser tab eventually returns to the
+"no last run" state without intervention. Re-running an action within
+5 minutes overwrites the cookie with the new run's results.
 
-  Migrate legacy public: masters    [Run migration on N posters]
-  Re-stamp QR codes                  [Re-stamp N posters]
+Implementation details:
 
-After this deploys, hit /admin/maintenance/backfill on
-https://gridlinecities.com and click "Re-stamp 21 posters". The pipeline
-should produce fresh previews encoding gridlinecities.com/q/<slug> for
-every London + New York poster.
-
-The page <h1> is now "Poster image maintenance" rather than "Backfill
-legacy masters" since it now serves both purposes; the route URL stays
-/admin/maintenance/backfill so existing bookmarks still work.
+- Cookie value is `encodeURIComponent(<the same encoded summary string
+  we used in the URL>)`. URL-encoding before storage keeps the cookie
+  parser happy on commas / pipes / spaces inside per-poster detail
+  strings (e.g. error messages from try/catch).
+- `path: '/admin/maintenance/backfill'` scopes the cookie tightly so
+  it isn't echoed on every admin request.
+- `httpOnly: true` keeps it out of any client-side JS (the page is a
+  Server Component and reads the cookie server-side, so JS access is
+  unnecessary).
+- New helpers `encodeReport(results)` and `persistReport(results)`
+  centralise the cookie-set logic so both `runBackfill` and `runRestamp`
+  call it identically.
+- `BackfillPage` no longer takes `searchParams` — the page reads from
+  cookies, not from the URL.
 
 One file changed: app/admin/maintenance/backfill/page.tsx
-+113 / -27 lines.
++39 / -18 lines.
