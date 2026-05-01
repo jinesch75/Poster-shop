@@ -1,17 +1,21 @@
-// One-shot backfill page.
+// Poster image maintenance page.
 //
-// Walks every poster whose masterKey is still on the legacy `public:`
-// prefix (i.e. seeded into public/posters/*.png), runs the new clean +
-// QR-stamped pipeline, and writes the resulting derivatives + a fresh
-// volume-backed master into the DB.
+// Two related actions, each with its own button:
 //
-// Run-once after the Phase-1 deploy. Continues past per-poster errors so
-// one bad file doesn't abort the batch. Safe to re-run: posters whose
-// masterKey is already volume-backed are skipped.
+// 1. Migrate legacy `public:` masters → volume.
+//    Walks every poster whose masterKey is still on the legacy `public:`
+//    prefix (i.e. seeded into public/posters/*.png), runs the new clean +
+//    QR-stamped pipeline, and writes the resulting derivatives + a fresh
+//    volume-backed master into the DB. Safe to re-run.
 //
-// Once every poster has migrated off public:, this route can be deleted
-// in a follow-up commit (the page itself is harmless to leave around;
-// it just becomes a no-op).
+// 2. Re-stamp QR codes on volume-backed posters.
+//    Re-runs the watermark pipeline against every poster's existing master
+//    so the QR badge encodes the current `NEXT_PUBLIC_SITE_URL`. Use this
+//    after a domain change. Skips posters still on `public:` — run the
+//    migration action first for those.
+//
+// Both continue past per-poster errors so one bad file doesn't abort the
+// batch.
 
 import { redirect } from 'next/navigation';
 import path from 'path';
@@ -25,7 +29,7 @@ export const metadata = { title: 'Backfill — Gridline Cities Admin' };
 
 type RowResult = {
   slug: string;
-  status: 'migrated' | 'skipped' | 'failed';
+  status: 'migrated' | 'restamped' | 'skipped' | 'failed';
   detail?: string;
 };
 
@@ -91,6 +95,61 @@ async function runBackfill(): Promise<void> {
   redirect(`/admin/maintenance/backfill?report=${encodeURIComponent(summary)}`);
 }
 
+async function runRestamp(): Promise<void> {
+  'use server';
+
+  // Re-run the watermark pipeline against every volume-backed poster's
+  // existing master. The QR badge encodes qrTargetUrl(slug), which reads
+  // from NEXT_PUBLIC_SITE_URL — so this is the action to run after a
+  // domain change to refresh QR codes pointing at the new host.
+  const posters = await prisma.poster.findMany({
+    select: { id: true, slug: true, masterKey: true },
+    orderBy: { number: 'asc' },
+  });
+
+  const results: RowResult[] = [];
+
+  for (const poster of posters) {
+    if (poster.masterKey.startsWith('public:')) {
+      results.push({
+        slug: poster.slug,
+        status: 'skipped',
+        detail: 'still on public: — run migration first',
+      });
+      continue;
+    }
+
+    try {
+      const derivatives = await reprocessMaster(poster.masterKey, poster.slug);
+
+      // master itself is unchanged on re-stamp; rewrite every derivative
+      // so previews / thumbs / mockups all carry the new QR target.
+      await prisma.poster.update({
+        where: { id: poster.id },
+        data: {
+          previewKey: derivatives.previewKey,
+          thumbnailKey: derivatives.thumbnailKey,
+          mockupOfficeKey: derivatives.mockupOfficeKey,
+          mockupLivingKey: derivatives.mockupLivingKey,
+          masterWidthPx: derivatives.widthPx,
+          masterHeightPx: derivatives.heightPx,
+        },
+      });
+
+      results.push({ slug: poster.slug, status: 'restamped' });
+    } catch (err) {
+      console.error(`restamp failed for ${poster.slug}`, err);
+      const detail = err instanceof Error ? err.message : String(err);
+      results.push({ slug: poster.slug, status: 'failed', detail });
+    }
+  }
+
+  const summary = results
+    .map((r) => `${r.slug}|${r.status}${r.detail ? '|' + r.detail : ''}`)
+    .join(',');
+  redirect(`/admin/maintenance/backfill?report=${encodeURIComponent(summary)}`);
+}
+
 function parseReport(raw: string | undefined): RowResult[] {
   if (!raw) return [];
   return raw
@@ -119,6 +178,7 @@ export default async function BackfillPage({
     where: { masterKey: { startsWith: 'public:' } },
   });
   const total = await prisma.poster.count();
+  const restampable = total - pending;
 
   const counts = results.reduce(
     (acc, r) => {
@@ -133,15 +193,18 @@ export default async function BackfillPage({
       <header className="admin-page__header">
         <div>
           <p className="admin-page__eyebrow">Maintenance</p>
-          <h1>Backfill legacy masters</h1>
+          <h1>Poster image maintenance</h1>
           <p className="admin-page__sub">
-            Migrates posters seeded into <code>public/posters/</code> onto the
-            volume and regenerates clean previews + QR-stamped derivatives.
+            Migrate legacy seeded masters onto the volume, or re-stamp QR
+            codes on every poster after a domain change.
           </p>
         </div>
       </header>
 
-      <section className="admin-card" style={{ marginBottom: 24 }}>
+      <section className="admin-card" style={{ marginBottom: 16 }}>
+        <h2 style={{ marginTop: 0 }}>
+          Migrate legacy <code>public:</code> masters
+        </h2>
         <p style={{ margin: 0 }}>
           <strong>{pending}</strong> of <strong>{total}</strong> poster
           {total === 1 ? '' : 's'} still on the legacy <code>public:</code>{' '}
@@ -149,26 +212,49 @@ export default async function BackfillPage({
         </p>
         {pending === 0 && (
           <p className="admin-muted" style={{ marginTop: 8 }}>
-            Nothing to backfill — every poster is already on the volume.
+            Nothing to migrate — every poster is already on the volume.
           </p>
         )}
+        <form action={runBackfill} style={{ marginTop: 16 }}>
+          <button
+            type="submit"
+            className="admin-btn-primary"
+            disabled={pending === 0}
+          >
+            Run migration on {pending} poster{pending === 1 ? '' : 's'}
+          </button>
+        </form>
       </section>
 
-      <form action={runBackfill}>
-        <button
-          type="submit"
-          className="admin-btn-primary"
-          disabled={pending === 0}
-        >
-          Run backfill on {pending} poster{pending === 1 ? '' : 's'}
-        </button>
-      </form>
+      <section className="admin-card" style={{ marginBottom: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Re-stamp QR codes</h2>
+        <p style={{ margin: 0 }}>
+          <strong>{restampable}</strong> volume-backed poster
+          {restampable === 1 ? '' : 's'} ready to re-stamp.
+        </p>
+        <p className="admin-muted" style={{ marginTop: 8 }}>
+          Run after a domain change so QR codes encode the current{' '}
+          <code>NEXT_PUBLIC_SITE_URL</code>. Re-uses each poster&apos;s
+          existing master and rewrites preview / thumbnail / mockup
+          derivatives.
+        </p>
+        <form action={runRestamp} style={{ marginTop: 16 }}>
+          <button
+            type="submit"
+            className="admin-btn-primary"
+            disabled={restampable === 0}
+          >
+            Re-stamp {restampable} poster{restampable === 1 ? '' : 's'}
+          </button>
+        </form>
+      </section>
 
       {results.length > 0 && (
         <section style={{ marginTop: 32 }}>
           <h2>Last run</h2>
           <p className="admin-muted">
-            {counts.migrated ?? 0} migrated · {counts.skipped ?? 0} skipped ·{' '}
+            {counts.migrated ?? 0} migrated · {counts.restamped ?? 0}{' '}
+            re-stamped · {counts.skipped ?? 0} skipped ·{' '}
             {counts.failed ?? 0} failed
           </p>
           <table className="admin-table" style={{ marginTop: 12 }}>

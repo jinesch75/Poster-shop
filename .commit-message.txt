@@ -1,95 +1,37 @@
-Rebrand: Linework Studio → Gridline Cities
+admin: add QR re-stamp action to maintenance backfill page
 
-The name "Linework Studio" was already in use by an existing
-architecture-illustration site at linework-studio.com. To avoid a
-brand-confusion / SEO fight from launch day, the shop is being renamed
-to Gridline Cities. Domain gridlinecities.com purchased on Porkbun
-2026-05-01.
+The /admin/maintenance/backfill page previously only handled the
+one-time migration of seeded `public:` masters onto the Railway volume.
+After the rebrand to Gridline Cities (with the new domain
+gridlinecities.com), every existing poster's preview still carries a QR
+code that encodes the old Railway URL — but the existing backfill skips
+any volume-backed poster, so it can't be reused for this purpose.
 
-This commit is the codebase rebrand sweep (Phase 1 of the rename
-migration). It is intentionally string-only — no behavioural changes.
+This commit adds a second server action `runRestamp` and a second card
+on the same page. The new action walks every volume-backed poster,
+calls reprocessMaster() on its existing master to regenerate previews +
+thumbnails + mockups, and writes the new derivative keys back to the
+DB. The QR badge encodes qrTargetUrl(slug), which reads from
+NEXT_PUBLIC_SITE_URL — so with that env var now set to
+https://gridlinecities.com, re-stamped posters get fresh QR codes
+pointing at the new domain.
 
-Changes:
+The original migration action stays untouched in case any future poster
+ever lands on the `public:` prefix again.
 
-  Wordmark (3 files)        Nav, admin layout, admin login.
-                            "Linework <span>Studio</span>" becomes
-                            "Gridline <span>Cities</span>". CSS class
-                            name `studio-sub` is now stylistically
-                            misnamed but functional — rename to
-                            `wordmark-sub` deferred as cosmetic follow-up.
+Page layout now has two cards:
 
-  Page titles & metadata    All <title> tags, OpenGraph titles, and
-  (~12 files)               meta descriptions updated. Affects every
-                            public page, admin page, and legal page.
+  Migrate legacy public: masters    [Run migration on N posters]
+  Re-stamp QR codes                  [Re-stamp N posters]
 
-  Legal pages (6 files)     Privacy, Terms, Refund, Imprint, Cookies,
-                            Licence — body copy updated.
-                            Terms also references the Site by domain;
-                            "linework.studio" → "gridlinecities.com".
+After this deploys, hit /admin/maintenance/backfill on
+https://gridlinecities.com and click "Re-stamp 21 posters". The pipeline
+should produce fresh previews encoding gridlinecities.com/q/<slug> for
+every London + New York poster.
 
-  Email + Stripe identity   lib/email-templates.ts (footer, subject,
-  (3 files)                 signoff, HTML wordmark), lib/receipt.ts
-                            (subject lines, item-title fallback),
-                            lib/stripe.ts (Stripe Checkout merchant
-                            name).
+The page <h1> is now "Poster image maintenance" rather than "Backfill
+legacy masters" since it now serves both purposes; the route URL stays
+/admin/maintenance/backfill so existing bookmarks still work.
 
-  Configuration             lib/legal-info.ts (tradingName), lib/email.ts
-  (3 files)                 (sender-name fallback), .env.example
-                            (NEXT_PUBLIC_SITE_NAME, BREVO_SENDER_NAME,
-                            AUTH_EMAIL_FROM).
-
-  Domain references         shop product page mailto link, terms page
-  (2 files)                 site reference.
-
-  Repo metadata             package.json + package-lock.json (`name`
-  (3 files)                 field "linework-studio" → "gridline-cities",
-                            description), README.md (brand mentions,
-                            example folder name, sample git remote URL).
-
-  Footer + signoff          Footer ©, About manifesto signoff.
-  (2 files)
-
-  Comments / non-rendered   Header comments in globals.css,
-  (5 files)                 schema.prisma, robots.txt, legal-info.ts,
-                            email.ts.
-
-  Descriptor cleanup        The lowercase technique-word "linework"
-                            (e.g. "architectural linework and primary
-                            blocks") replaced with "line drawings"
-                            across prisma/seed.ts and the admin import
-                            page's per-city default descriptions.
-                            Reads naturally and removes the brand echo.
-
-  Admin auth cookie         lib/auth.ts COOKIE_NAME changed from
-                            'linework_admin' to 'gridline_cities_admin'.
-                            Existing admin sessions will be invalidated
-                            on deploy — sign in again post-deploy.
-
-Intentionally NOT changed:
-
-  Storage volume path       lib/storage.ts still resolves to /data/linework
-                            in production. The Railway persistent volume
-                            is mounted at that path and contains all
-                            21 currently-seeded posters; renaming the
-                            mount would orphan them. Leaving as a
-                            stable internal path; not a brand surface.
-
-  Watermark component       components/Watermark.tsx text updated for
-                            consistency, but the component is dead code
-                            (no longer used after the QR-code image
-                            protection rebuild) and is safe to delete
-                            in a follow-up.
-
-Out of scope (separate phases):
-
-  - DNS at Porkbun → Railway custom domain
-  - Brevo: domain verification (DKIM, Brevo Code, DMARC); rename
-    newsletter list "Linework Studio" → "Gridline Cities" in dashboard
-  - Railway env vars: BREVO_SENDER_EMAIL, BREVO_SENDER_NAME,
-    NEXT_PUBLIC_SITE_NAME (and any *_SITE_URL var) need updating
-  - QR re-stamp via /admin/maintenance/backfill once new domain is live
-  - Stripe dashboard: business display name "Linework Studio" → "Gridline Cities"
-  - Optional: rename GitHub repo + local folder linework-studio → gridline-cities
-  - New logo/favicon (current wordmark is CSS-rendered text, no image
-    asset to swap, so nothing required for this commit; design refresh
-    can come later)
+One file changed: app/admin/maintenance/backfill/page.tsx
++113 / -27 lines.
