@@ -142,7 +142,14 @@ nav .wordmark {
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.015em;
-  display: flex; align-items: baseline; gap: 6px;
+  display: flex; align-items: center; gap: 9px;
+  color: inherit;
+}
+nav .wordmark .brand-mark {
+  flex-shrink: 0;
+}
+nav .wordmark .wordmark-text {
+  display: inline;
 }
 nav .wordmark .studio-sub {
   font-weight: 300;

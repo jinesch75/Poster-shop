@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 100" font-family="Outfit, 'Avenir Next', 'Helvetica Neue', system-ui, sans-serif">
+  <g>
+    <rect x="6" y="6" width="88" height="88" fill="none" stroke="#000000" stroke-width="8"/>
+    <line x1="40" y1="6" x2="40" y2="94" stroke="#000000" stroke-width="8"/>
+    <line x1="6" y1="60" x2="94" y2="60" stroke="#000000" stroke-width="8"/>
+  </g>
+  <text x="125" y="63" font-size="34" font-weight="500" letter-spacing="6" fill="#000000">GRIDLINE CITIES</text>
+</svg>
