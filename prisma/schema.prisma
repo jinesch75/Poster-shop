@@ -211,31 +211,11 @@ model Subscriber {
   createdAt    DateTime @default(now())
 }
 
-// ---------- QR scan analytics ----------
-//
-// Every QR-stamped preview encodes /q/<slug>. The /q/[slug] route logs
-// each hit before redirecting to the product page. Gives a per-poster
-// signal on which images are travelling out into the wild.
+// (QrScan model removed 2026-05-02 — the QR badge was removed from
+// the preview pipeline and the /q/<slug> redirect endpoint along with
+// it. The next `prisma db push` on Railway drops the underlying table.)
 
-model QrScan {
-  id         String   @id @default(cuid())
-  posterSlug String
-  scannedAt  DateTime @default(now())
-  userAgent  String?
-  referrer   String?
-
-  @@index([posterSlug, scannedAt])
-}
-
-// ---------- Site settings ----------
-//
-// Single-row settings table — always use id="singleton". Accessed via
-// lib/settings.ts which upserts on write and falls back gracefully on read.
-// Keeping it as a real table (vs. env vars) means content editors can change
-// things through the admin panel without a redeploy.
-
-model SiteSetting {
-  id             String   @id @default("singleton")
-  heroPosterId   String?  // points at Poster.id — the featured poster on the home page
-  updatedAt      DateTime @updatedAt
-}
+// (SiteSetting model removed 2026-05-02 — the only setting was a
+// hero-poster picker that the homepage never read. Dropped along with
+// /admin/settings and lib/settings.ts. The next `prisma db push` on
+// Railway will drop the underlying table.)

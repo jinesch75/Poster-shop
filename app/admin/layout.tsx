@@ -35,11 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <nav className="admin-nav__links">
           <Link href="/admin">Overview</Link>
           <Link href="/admin/posters">Posters</Link>
-          <Link href="/admin/posters/new">Upload new</Link>
-          <Link href="/admin/posters/import">Bulk import</Link>
+          <Link href="/admin/posters/new">Upload (full metadata)</Link>
           <Link href="/admin/cities">Cities</Link>
           <Link href="/admin/orders">Orders</Link>
-          <Link href="/admin/settings">Settings</Link>
           <Link href="/admin/maintenance/backfill">Maintenance</Link>
         </nav>
         <div className="admin-nav__footer">

@@ -201,19 +201,6 @@ export async function getCitySlugs(): Promise<string[]> {
   return rows.map((r) => r.slug);
 }
 
-// ---------- Hero ----------
-// Re-export from settings for a single public surface.
-export { getHeroPoster as getHeroPosterRow } from '@/lib/settings';
-
-/** Hero poster as a view model, or null if no published posters exist. */
-export async function getHeroPosterView(): Promise<PosterView | null> {
-  const { getHeroPoster } = await import('@/lib/settings');
-  const row = await getHeroPoster();
-  if (!row) return null;
-  const city = await prisma.city.findUnique({
-    where: { id: row.cityId },
-    select: { name: true, slug: true },
-  });
-  if (!city) return null;
-  return toPosterView({ ...row, city });
-}
+// (Hero-poster helpers removed 2026-05-02 — the homepage no longer
+// renders a hero poster, the picker UI was deleted, and nothing else
+// in the codebase consumes these.)

@@ -38,7 +38,7 @@ export async function signAdminToken(): Promise<string> {
   return new SignJWT({ role: 'admin' })
     .setProtectedHeader({ alg: ALG })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime('1d')
     .sign(secretKey());
 }
 
@@ -53,4 +53,6 @@ export async function verifyAdminToken(token: string | undefined): Promise<boole
 }
 
 export const ADMIN_COOKIE = COOKIE_NAME;
-export const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+// Short session (1 day) so a borrowed/stolen laptop can't browse the
+// admin panel for a week. Re-login is just a password entry.
+export const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 24; // 1 day

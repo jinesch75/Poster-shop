@@ -10,9 +10,8 @@
 //
 // 2. Regenerate previews / thumbnails / mockups on volume-backed posters.
 //    Re-runs the watermark pipeline against every poster's existing master
-//    so derivatives reflect the current pipeline (e.g. after a pipeline
-//    change such as removing the QR stamp, or after a domain change while
-//    QR stamping was active). Skips posters still on `public:` — run the
+//    so derivatives reflect the current pipeline (useful after any change
+//    to lib/watermark.ts). Skips posters still on `public:` — run the
 //    migration action first for those.
 //
 // Both continue past per-poster errors so one bad file doesn't abort the
@@ -39,7 +38,7 @@ const REPORT_COOKIE_TTL_SECONDS = 300;
 
 type RowResult = {
   slug: string;
-  status: 'migrated' | 'restamped' | 'skipped' | 'failed';
+  status: 'migrated' | 'regenerated' | 'skipped' | 'failed';
   detail?: string;
 };
 
@@ -88,7 +87,7 @@ async function runBackfill(): Promise<void> {
       // 3. Run the new pipeline against the volume-backed master.
       //    reprocessMaster reads from storage by key, so we go via the
       //    new key we just wrote.
-      const derivatives = await reprocessMaster(newMasterKey, poster.slug);
+      const derivatives = await reprocessMaster(newMasterKey);
 
       // 4. Update the DB row to point at the volume-backed everything.
       await prisma.poster.update({
@@ -116,13 +115,13 @@ async function runBackfill(): Promise<void> {
   redirect('/admin/maintenance/backfill');
 }
 
-async function runRestamp(): Promise<void> {
+async function runRegenerate(): Promise<void> {
   'use server';
 
   // Re-run the watermark pipeline against every volume-backed poster's
-  // existing master. The QR badge encodes qrTargetUrl(slug), which reads
-  // from NEXT_PUBLIC_SITE_URL — so this is the action to run after a
-  // domain change to refresh QR codes pointing at the new host.
+  // existing master. Useful any time lib/watermark.ts changes — drops the
+  // new derivatives back into storage and updates the DB row to point at
+  // them. Master itself is untouched.
   const posters = await prisma.poster.findMany({
     select: { id: true, slug: true, masterKey: true },
     orderBy: { number: 'asc' },
@@ -141,10 +140,8 @@ async function runRestamp(): Promise<void> {
     }
 
     try {
-      const derivatives = await reprocessMaster(poster.masterKey, poster.slug);
+      const derivatives = await reprocessMaster(poster.masterKey);
 
-      // master itself is unchanged on re-stamp; rewrite every derivative
-      // so previews / thumbs / mockups all carry the new QR target.
       await prisma.poster.update({
         where: { id: poster.id },
         data: {
@@ -157,9 +154,9 @@ async function runRestamp(): Promise<void> {
         },
       });
 
-      results.push({ slug: poster.slug, status: 'restamped' });
+      results.push({ slug: poster.slug, status: 'regenerated' });
     } catch (err) {
-      console.error(`restamp failed for ${poster.slug}`, err);
+      console.error(`regenerate failed for ${poster.slug}`, err);
       const detail = err instanceof Error ? err.message : String(err);
       results.push({ slug: poster.slug, status: 'failed', detail });
     }
@@ -186,7 +183,7 @@ function parseReport(raw: string | undefined): RowResult[] {
 
 export default async function BackfillPage() {
   // Read the most recent run's results from the cookie set by
-  // runBackfill / runRestamp. Cookie expires after 5 minutes so the
+  // runBackfill / runRegenerate. Cookie expires after 5 minutes so the
   // page eventually goes back to a clean "no last run" state on its own.
   const cookieStore = await cookies();
   const reportCookie = cookieStore.get(REPORT_COOKIE);
@@ -200,7 +197,7 @@ export default async function BackfillPage() {
     where: { masterKey: { startsWith: 'public:' } },
   });
   const total = await prisma.poster.count();
-  const restampable = total - pending;
+  const regenerable = total - pending;
 
   const counts = results.reduce(
     (acc, r) => {
@@ -251,22 +248,22 @@ export default async function BackfillPage() {
       <section className="admin-card" style={{ marginBottom: 24 }}>
         <h2 style={{ marginTop: 0 }}>Regenerate previews</h2>
         <p style={{ margin: 0 }}>
-          <strong>{restampable}</strong> volume-backed poster
-          {restampable === 1 ? '' : 's'} ready to regenerate.
+          <strong>{regenerable}</strong> volume-backed poster
+          {regenerable === 1 ? '' : 's'} ready to regenerate.
         </p>
         <p className="admin-muted" style={{ marginTop: 8 }}>
           Re-runs the watermark pipeline against each poster&apos;s existing
           master and rewrites preview / thumbnail / mockup derivatives. Run
-          after a pipeline change (e.g. removing the QR stamp) so existing
+          after any change to <code>lib/watermark.ts</code> so existing
           posters reflect the current output format.
         </p>
-        <form action={runRestamp} style={{ marginTop: 16 }}>
+        <form action={runRegenerate} style={{ marginTop: 16 }}>
           <button
             type="submit"
             className="admin-btn-primary"
-            disabled={restampable === 0}
+            disabled={regenerable === 0}
           >
-            Regenerate {restampable} poster{restampable === 1 ? '' : 's'}
+            Regenerate {regenerable} poster{regenerable === 1 ? '' : 's'}
           </button>
         </form>
       </section>
@@ -275,8 +272,8 @@ export default async function BackfillPage() {
         <section style={{ marginTop: 32 }}>
           <h2>Last run</h2>
           <p className="admin-muted">
-            {counts.migrated ?? 0} migrated · {counts.restamped ?? 0}{' '}
-            re-stamped · {counts.skipped ?? 0} skipped ·{' '}
+            {counts.migrated ?? 0} migrated · {counts.regenerated ?? 0}{' '}
+            regenerated · {counts.skipped ?? 0} skipped ·{' '}
             {counts.failed ?? 0} failed
           </p>
           <table className="admin-table" style={{ marginTop: 12 }}>

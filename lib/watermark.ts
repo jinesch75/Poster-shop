@@ -7,10 +7,6 @@
 // 1200px preview is gorgeous on screen but useless for printing at any
 // meaningful size — at 300dpi it tops out around postcard size. The
 // thumbnail is even smaller (500px) for grid display.
-//
-// Note (2026-05-02): the QR-badge stamp on the preview was removed.
-// The /q/<slug> redirect endpoint, the QrScan model, and lib/qr.ts are
-// retained so QR stamping can be reintroduced later without rewiring.
 
 import sharp from 'sharp';
 import path from 'path';
@@ -44,21 +40,16 @@ export type PosterDerivatives = {
  * + two mockups. Returns storage keys for all of them.
  *
  * @param masterBuffer raw bytes of the uploaded master file (PNG/JPG)
- * @param slug         poster slug — currently unused inside the pipeline,
- *                     retained on the public API so QR stamping (which
- *                     bakes `/q/<slug>` into the preview) can be turned
- *                     back on later without changing call sites.
  * @param ext          original master extension (informs the master file's stored ext)
  */
 export async function processMaster(
   masterBuffer: Buffer,
-  slug: string,
   ext: 'png' | 'jpg' = 'png',
 ): Promise<PosterDerivatives> {
   // Master — untouched, written to private volume storage.
   const masterKey = await putBuffer('masters', masterBuffer, ext);
 
-  return runDerivatives(masterBuffer, slug, masterKey);
+  return runDerivatives(masterBuffer, masterKey);
 }
 
 /**
@@ -69,17 +60,15 @@ export async function processMaster(
  */
 export async function reprocessMaster(
   masterKey: string,
-  slug: string,
 ): Promise<PosterDerivatives> {
   const buffer = await readBuffer(masterKey);
-  return runDerivatives(buffer, slug, masterKey);
+  return runDerivatives(buffer, masterKey);
 }
 
 // ---------- Internal: derivative generation ----------
 
 async function runDerivatives(
   masterBuffer: Buffer,
-  _slug: string,
   masterKey: string,
 ): Promise<PosterDerivatives> {
   const meta = await sharp(masterBuffer).metadata();

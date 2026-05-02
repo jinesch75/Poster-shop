@@ -1,0 +1,93 @@
+admin: trim panel, merge upload paths, remove QR plumbing, polish design
+
+A consolidated cleanup pass over the admin panel. Five buckets:
+
+1. Auth tightening
+   - Cookie max-age + JWT expiration both dropped from 7 days to 1 day.
+   - Dashboard now carries a "Security" card explaining how to rotate
+     ADMIN_PASSWORD on Railway. The password is — and stays — the
+     single env var on Railway; nothing in the repo references it.
+
+2. Dead admin sections removed
+   - /admin/settings (hero-poster picker that the homepage didn't
+     actually read) is neutralised: page returns notFound() and the
+     SiteSetting Prisma model is dropped. lib/settings.ts emptied
+     (export {} stub). Sidebar entry removed. Stale re-exports of
+     getHeroPosterRow / getHeroPosterView from lib/posters.ts also
+     removed (unused anywhere).
+   - Dashboard copy refreshed: dropped the Session-4 placeholder lede
+     and the "No orders yet — Stripe arrives in Session 4" empty state.
+
+3. Upload paths merged
+   - /admin/posters now hosts the drag-and-drop QuickUploadDropzone at
+     the top of the catalog list. Drops create DRAFT posters with
+     auto-generated metadata; click any tile to refine and publish.
+   - /admin/posters/import (the page that wrapped both the dropzone and
+     the git-based incoming/ flow) is neutralised — page returns
+     notFound(). The git-based path was removed entirely; nobody used
+     it and a deploy round-trip per upload wasn't worth it.
+   - Server actions extracted to app/admin/posters/actions.ts so the
+     list page stays focused on rendering.
+   - Sidebar trimmed: "Bulk import" gone, "Upload new" → "Upload (full
+     metadata)" so the entry's purpose is obvious next to the merged
+     dropzone.
+
+4. Full QR removal
+   - lib/qr.ts and app/q/[slug]/route.ts neutralised (404). The QrScan
+     Prisma model is dropped. qrcode + @types/qrcode removed from
+     package.json (run `npm install` after pulling to regenerate
+     package-lock.json).
+   - lib/watermark.ts: processMaster() and reprocessMaster() lose the
+     `slug` parameter that was kept around "in case QR comes back".
+     All four call sites updated:
+       - app/admin/posters/new/page.tsx
+       - app/admin/posters/[id]/page.tsx (createPoster + replaceMaster)
+       - app/admin/posters/actions.ts (runQuickUpload)
+       - app/admin/maintenance/backfill/page.tsx (runBackfill +
+         runRegenerate)
+   - Maintenance page: runRestamp → runRegenerate (and "restamped" →
+     "regenerated" everywhere it surfaced — labels, status enum,
+     report rendering). Comments cleaned of QR references.
+
+5. Design polish (app/admin.css)
+   - Two-tone shell: page sits on --paper-warm, individual cards on
+     --paper. The visual layering does most of the work to make the
+     panel feel less flat without changing the Scandinavian palette.
+   - Soft drop shadows on cards (--shadow-card / --shadow-card-hover)
+     instead of 1px borders. Catalog tiles lift on hover.
+   - Sidebar gets a subtle right-side soft shadow + a left-edge accent
+     bar that grows on link hover. More breathing room in the brand
+     and footer blocks.
+   - Buttons (.admin-btn-primary / .admin-btn-ghost) get a small
+     translateY on hover with a matching shadow lift.
+   - Form inputs get a focus ring (3px translucent accent) and a
+     border-darken on hover.
+   - Login card gets a longer shadow so it sits above the page rather
+     than blending into it.
+   - Tables get a card surround (paper background, rounded, shadow)
+     and zebra-light hover state on rows.
+
+Cosmetic
+   - Removed the now-unused `.card .no` CSS rule (and its responsive
+     override) from globals.css. The numbering markup was removed
+     earlier today.
+
+Manual cleanup left for Jacques' terminal (sandbox can't unlink files
+under iCloud Drive):
+
+  rm -rf \
+    app/admin/settings \
+    app/admin/posters/import \
+    app/q \
+    incoming \
+    lib/qr.ts \
+    lib/settings.ts \
+    .commit-msg-email-fix.txt \
+    .commit-msg-qr-removal.txt \
+    .commit-msg.txt \
+    .commit-message-cities.txt
+  npm install   # refreshes package-lock.json after qrcode removal
+
+Until those run, the neutralised pages and files stay in the tree but
+return 404 / are unimported. No production behaviour change from
+deleting them — just tidiness.

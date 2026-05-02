@@ -1,16 +1,12 @@
 'use client';
 
-// Drag-and-drop quick upload for the /admin/posters/import page.
+// Drag-and-drop quick upload, used at the top of /admin/posters.
 //
-// Pairs with the runQuickUpload server action: the user picks a city
-// once, drops one or more PNG/JPG files, and each one is run through
-// the same processMaster pipeline that the git-based import uses. They
-// land as DRAFT posters with auto-generated metadata, exactly like
-// files dropped into incoming/<city>/ and committed.
-//
-// Use this when iterating on one or two new pictures and you don't
-// want to wait for a Railway redeploy. Use the git path for big
-// batches and to keep the originals in commit history.
+// Pairs with the runQuickUpload server action in app/admin/posters/actions.ts:
+// the user picks a city once, drops one or more PNG/JPG files, and each
+// one is run through the processMaster pipeline. They land as DRAFT
+// posters with auto-generated metadata. Click into a draft to refine
+// and publish. 50 MB cap per file.
 
 import { useRef, useState, useTransition } from 'react';
 

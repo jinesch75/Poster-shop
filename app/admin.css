@@ -1,26 +1,39 @@
 /* =========================================================================
    Admin panel styles.
    Loaded only on /admin/* routes. Reuses the tokens from globals.css so
-   it inherits the Scandinavian palette.
+   it inherits the Scandinavian palette. The shell uses a two-tone layout:
+   the page (admin-main) sits on --paper-warm, individual cards on --paper.
+   Soft shadows give the panel depth without breaking the muted aesthetic.
    ========================================================================= */
 
+/* Reusable shadow tokens. Two layers — a tight 1px contour, plus a longer
+   soft drop — give cards a "floating on warm paper" feel that's much
+   nicer than a flat 1px border. */
 .admin-shell {
+  --shadow-card: 0 1px 2px rgba(26, 22, 14, 0.04),
+                 0 8px 24px -10px rgba(26, 22, 14, 0.10);
+  --shadow-card-hover: 0 1px 2px rgba(26, 22, 14, 0.06),
+                      0 14px 32px -10px rgba(26, 22, 14, 0.16);
+  --shadow-nav: 1px 0 0 var(--rule),
+                4px 0 18px -10px rgba(26, 22, 14, 0.08);
+
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 248px 1fr;
   min-height: 100vh;
-  background: var(--paper);
+  background: var(--paper-warm);
 }
 
 .admin-nav {
-  border-right: 1px solid var(--rule);
-  padding: 32px 24px;
+  padding: 36px 20px;
   position: sticky;
   top: 0;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 36px;
   background: var(--paper);
+  box-shadow: var(--shadow-nav);
+  z-index: 1;
 }
 
 .admin-nav__brand {
@@ -32,6 +45,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  padding: 0 10px;
 }
 
 .admin-nav__tag {
@@ -53,17 +67,38 @@
 }
 
 .admin-nav__links a {
+  position: relative;
   color: var(--ink-soft);
   text-decoration: none;
-  padding: 8px 10px;
-  border-radius: 4px;
+  padding: 9px 12px 9px 14px;
+  border-radius: 5px;
   font-size: 14px;
-  transition: background 160ms var(--ease), color 160ms var(--ease);
+  transition:
+    background 180ms var(--ease),
+    color 180ms var(--ease),
+    transform 180ms var(--ease);
+}
+
+.admin-nav__links a::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  background: var(--accent);
+  border-radius: 2px;
+  transform: translateY(-50%);
+  transition: height 180ms var(--ease);
 }
 
 .admin-nav__links a:hover {
   background: var(--paper-warm);
   color: var(--ink);
+}
+
+.admin-nav__links a:hover::before {
+  height: 18px;
 }
 
 .admin-nav__footer {
@@ -72,11 +107,13 @@
   flex-direction: column;
   gap: 12px;
   font-size: 13px;
+  padding: 0 4px;
 }
 
 .admin-nav__footer a {
   color: var(--mute);
   text-decoration: none;
+  padding: 4px 8px;
 }
 
 .admin-nav__footer a:hover {
@@ -89,10 +126,12 @@
   color: var(--ink-soft);
   font-family: inherit;
   font-size: 13px;
-  padding: 8px 12px;
-  border-radius: 3px;
+  padding: 9px 14px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 160ms var(--ease);
+  transition: all 180ms var(--ease);
+  width: 100%;
+  text-align: left;
 }
 
 .admin-nav__logout:hover {
@@ -102,8 +141,8 @@
 }
 
 .admin-main {
-  padding: clamp(24px, 3vw, 48px);
-  max-width: 1200px;
+  padding: clamp(28px, 3.2vw, 56px);
+  max-width: 1240px;
 }
 
 /* ---- Page header ---- */
@@ -163,12 +202,14 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1px;
   background: var(--rule);
-  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
   margin-bottom: 48px;
 }
 
 .admin-stat {
-  padding: 20px 24px;
+  padding: 22px 26px;
   background: var(--paper);
 }
 
@@ -195,7 +236,7 @@
 }
 
 .admin-dash__section {
-  margin-bottom: 48px;
+  margin-bottom: 52px;
 }
 
 .admin-dash__section h2 {
@@ -205,19 +246,42 @@
   margin-bottom: 16px;
 }
 
+.admin-section-title {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 500;
+  margin: 36px 0 16px;
+}
+
 /* ---- Tables ---- */
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  background: var(--paper);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .admin-table th,
 .admin-table td {
   text-align: left;
-  padding: 12px 8px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--rule);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr {
+  transition: background 160ms var(--ease);
+}
+
+.admin-table tbody tr:hover {
+  background: var(--paper-warm);
 }
 
 .admin-table th {
@@ -226,10 +290,64 @@
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.1em;
+  background: var(--paper-warm);
 }
 
 .admin-table__right {
   text-align: right;
+}
+
+/* ---- Cards (generic) ----
+   Default `.admin-card` is a *content card* — soft shadow, paper-coloured,
+   gentle padding. Variant classes override specific aspects:
+   - .admin-card--poster: a clickable thumb tile in the catalog grid
+   - .admin-card--upload: the dropzone container
+   - .admin-card--security: dashboard security tip
+*/
+
+.admin-card {
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 24px 26px;
+  box-shadow: var(--shadow-card);
+}
+
+.admin-card__heading {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  letter-spacing: -0.005em;
+}
+
+.admin-card--upload {
+  margin-bottom: 36px;
+}
+
+.admin-card--security p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.admin-card--security ol {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.admin-card--security ol li {
+  margin-bottom: 4px;
+}
+
+.admin-card--security code {
+  background: var(--paper-warm);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12.5px;
 }
 
 /* ---- Poster grid ---- */
@@ -240,26 +358,40 @@
   gap: 24px;
 }
 
-.admin-card {
+/* The catalog tile cards are a different shape — link tiles, not content
+   cards — so they reset the default .admin-card padding/background. */
+.admin-card--poster {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  transition: transform 200ms var(--ease);
+  transition:
+    transform 220ms var(--ease),
+    box-shadow 220ms var(--ease);
+  border-radius: 4px;
 }
 
-.admin-card:hover {
-  transform: translateY(-2px);
+.admin-card--poster:hover {
+  transform: translateY(-3px);
+}
+
+.admin-card--poster:hover .admin-card__thumb {
+  box-shadow: var(--shadow-card-hover);
 }
 
 .admin-card__thumb {
-  background: var(--paper-warm);
+  background: var(--paper);
   aspect-ratio: 3 / 4;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 220ms var(--ease);
 }
 
 .admin-card__thumb img {
@@ -269,7 +401,7 @@
 }
 
 .admin-card__meta {
-  padding-top: 12px;
+  padding-top: 14px;
 }
 
 .admin-card__title {
@@ -303,14 +435,14 @@
 .admin-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 600px;
+  gap: 22px;
+  max-width: 620px;
 }
 
 .admin-form__row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
+  gap: 22px;
 }
 
 .admin-form label {
@@ -335,11 +467,20 @@
 .admin-form select {
   font-family: inherit;
   font-size: 14px;
-  padding: 10px 12px;
+  padding: 11px 14px;
   border: 1px solid var(--rule-strong);
   background: var(--paper);
   color: var(--ink);
-  border-radius: 3px;
+  border-radius: 4px;
+  transition:
+    border-color 160ms var(--ease),
+    box-shadow 160ms var(--ease);
+}
+
+.admin-form input:hover:not(:focus),
+.admin-form textarea:hover:not(:focus),
+.admin-form select:hover:not(:focus) {
+  border-color: var(--ink-soft);
 }
 
 .admin-form input:focus,
@@ -347,6 +488,7 @@
 .admin-form select:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 78, 90, 0.12);
 }
 
 .admin-form__checkbox {
@@ -370,36 +512,58 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  padding: 12px 24px;
-  border-radius: 3px;
+  letter-spacing: 0.04em;
+  padding: 13px 26px;
+  border-radius: 4px;
   border: none;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
-  transition: background 160ms var(--ease);
+  box-shadow:
+    0 1px 1px rgba(26, 22, 14, 0.10),
+    0 4px 12px -4px rgba(26, 22, 14, 0.18);
+  transition:
+    background 200ms var(--ease),
+    transform 200ms var(--ease),
+    box-shadow 200ms var(--ease);
   align-self: flex-start;
 }
 
-.admin-btn-primary:hover {
+.admin-btn-primary:hover:not(:disabled) {
   background: var(--accent-deep);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 1px rgba(26, 22, 14, 0.12),
+    0 8px 18px -4px rgba(26, 22, 14, 0.22);
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .admin-btn-ghost {
-  background: transparent;
+  background: var(--paper);
   color: var(--ink-soft);
   font-family: inherit;
   font-size: 13px;
-  padding: 10px 20px;
+  font-weight: 500;
+  padding: 11px 22px;
   border: 1px solid var(--rule-strong);
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 160ms var(--ease);
+  text-decoration: none;
+  display: inline-block;
+  transition:
+    all 180ms var(--ease);
 }
 
 .admin-btn-ghost:hover {
   border-color: var(--ink);
   color: var(--ink);
+  background: var(--paper);
+  transform: translateY(-1px);
 }
 
 .admin-btn-danger {
@@ -437,9 +601,10 @@
 }
 
 .admin-preview {
-  background: var(--paper-warm);
-  border: 1px solid var(--rule);
-  padding: 12px;
+  background: var(--paper);
+  padding: 14px;
+  border-radius: 5px;
+  box-shadow: var(--shadow-card);
 }
 
 .admin-preview img {
@@ -463,12 +628,14 @@
 }
 
 .admin-banner {
-  background: var(--paper-warm);
+  background: var(--paper);
   border-left: 3px solid var(--accent);
-  padding: 12px 16px;
+  padding: 14px 18px;
   color: var(--ink-soft);
   font-size: 14px;
   margin-bottom: 24px;
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
 }
 
 .admin-banner--error {
@@ -527,12 +694,13 @@
 }
 
 .admin-city {
-  border: 1px solid var(--rule);
-  padding: 24px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   background: var(--paper);
+  border-radius: 6px;
+  box-shadow: var(--shadow-card);
 }
 
 .admin-city__head {
@@ -551,7 +719,8 @@
 /* "Add a city" form sits above the stack of existing cities — distinguish it
    with a dashed border and breathing room before the next card. */
 .admin-city--new {
-  border-style: dashed;
+  border: 1px dashed var(--rule-strong);
+  box-shadow: none;
   background: var(--paper-warm);
   margin-bottom: 32px;
 }
@@ -570,9 +739,12 @@
 .admin-login__card {
   width: 100%;
   max-width: 380px;
-  padding: 40px;
-  border: 1px solid var(--rule);
+  padding: 44px;
   background: var(--paper);
+  border-radius: 8px;
+  box-shadow:
+    0 1px 2px rgba(26, 22, 14, 0.04),
+    0 16px 48px -16px rgba(26, 22, 14, 0.18);
 }
 
 .admin-login__brand {
@@ -696,20 +868,22 @@
 .quick-upload__drop {
   border: 1.5px dashed var(--rule-strong, #b8b3a7);
   border-radius: 6px;
-  padding: 36px 24px;
+  padding: 44px 28px;
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
-  background: rgba(0, 0, 0, 0.015);
+  transition:
+    background-color 200ms var(--ease),
+    border-color 200ms var(--ease);
+  background: var(--paper-warm);
 }
 .quick-upload__drop:hover,
 .quick-upload__drop:focus-visible {
   border-color: var(--accent, #1a1a1a);
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(59, 78, 90, 0.04);
 }
 .quick-upload__drop--over {
   border-color: var(--accent, #1a1a1a);
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(59, 78, 90, 0.08);
 }
 .quick-upload__drop-text {
   font-size: 15px;

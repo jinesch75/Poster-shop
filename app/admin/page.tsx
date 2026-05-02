@@ -29,9 +29,7 @@ export default async function AdminDashboard() {
       <header className="admin-dash__header">
         <p className="admin-dash__eyebrow">Overview</p>
         <h1>Dashboard</h1>
-        <p className="admin-dash__lede">
-          The shop at a glance. Stripe-wired metrics fill in during Session 4.
-        </p>
+        <p className="admin-dash__lede">The shop at a glance.</p>
       </header>
 
       <div className="admin-stats">
@@ -45,7 +43,7 @@ export default async function AdminDashboard() {
       <section className="admin-dash__section">
         <h2>Recent orders</h2>
         {recentOrders.length === 0 ? (
-          <p className="admin-muted">No orders yet — Stripe arrives in Session 4.</p>
+          <p className="admin-muted">No orders yet.</p>
         ) : (
           <table className="admin-table">
             <thead>
@@ -68,6 +66,34 @@ export default async function AdminDashboard() {
             </tbody>
           </table>
         )}
+      </section>
+
+      <section className="admin-dash__section admin-dash__security">
+        <h2>Security</h2>
+        <div className="admin-card admin-card--security">
+          <div className="admin-card__heading">Admin password</div>
+          <p>
+            The admin password is held in the <code>ADMIN_PASSWORD</code>{' '}
+            environment variable on Railway. Rotate it from the Railway
+            dashboard:
+          </p>
+          <ol>
+            <li>
+              Open Railway → <em>poster-shop</em> → <em>Variables</em>.
+            </li>
+            <li>
+              Edit <code>ADMIN_PASSWORD</code> to your new value.
+            </li>
+            <li>
+              Save — Railway redeploys automatically. The current admin
+              session keeps working until the cookie expires (1 day).
+            </li>
+          </ol>
+          <p className="admin-muted">
+            Tip: pick a 12+ character passphrase rather than something
+            short — this password also unlocks order data and master files.
+          </p>
+        </div>
       </section>
     </div>
   );
