@@ -1,0 +1,49 @@
+previews: remove QR badge from preview pipeline
+
+The small QR code that got composited into the bottom-right of every
+preview is gone. New previews are clean — same 1200px JPEG, just
+without the white pill and QR mark. Resolution remains the protection
+mechanism (4000px+ master stays private, public 1200px preview is too
+small to print well).
+
+Surgical removal — left the rest of the QR scaffolding in place so it
+can be re-enabled later by reverting just lib/watermark.ts:
+
+  - lib/qr.ts (qrPngBuffer / qrTargetUrl helpers) — kept
+  - app/q/[slug]/route.ts (the redirect endpoint)         — kept
+  - prisma/schema.prisma QrScan model                     — kept
+  - qrcode + @types/qrcode in package.json                — kept
+
+The slug parameter on processMaster() / reprocessMaster() is also kept
+on the public API for the same reason — flipping QR back on later is
+a one-file change instead of a cross-call-site rewrite.
+
+Files touched:
+
+  lib/watermark.ts
+    - drop import { qrPngBuffer, qrTargetUrl } from './qr'
+    - drop QR_FRACTION_OF_WIDTH / QR_PILL_PADDING / QR_EDGE_INSET_FRACTION
+    - drop buildQrBadge() helper
+    - drop the QR composite from the preview sharp pipeline
+    - rename internal runDerivatives slug → _slug
+    - update file-top docstring to note the 2026-05-02 removal
+
+  app/shop/[slug]/page.tsx
+    - remove the "small QR mark on the preview is for the public
+      listing only" sentence from the trust block; the rest of the
+      message ("full resolution, unmarked, and yours to print") still
+      lands the right point without referencing a mark that no longer
+      exists.
+
+  app/admin/maintenance/backfill/page.tsx
+    - section title "Re-stamp QR codes" → "Regenerate previews"
+    - button label "Re-stamp N posters" → "Regenerate N posters"
+    - explanatory copy + top-of-file comments updated to reflect that
+      the action is now a generic "rerun the pipeline against existing
+      masters" tool rather than a QR-specific one. Server action name
+      runRestamp kept as-is to avoid a rename ripple.
+
+Post-deploy action required: hit /admin/maintenance/backfill and click
+"Regenerate" on the existing posters so they pick up the new QR-free
+previews. Until that runs, the 21 catalogued posters keep showing the
+old QR-stamped previews from the volume.

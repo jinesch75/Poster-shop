@@ -4,14 +4,15 @@
 //
 // 1. Migrate legacy `public:` masters → volume.
 //    Walks every poster whose masterKey is still on the legacy `public:`
-//    prefix (i.e. seeded into public/posters/*.png), runs the new clean +
-//    QR-stamped pipeline, and writes the resulting derivatives + a fresh
-//    volume-backed master into the DB. Safe to re-run.
+//    prefix (i.e. seeded into public/posters/*.png), runs the watermark
+//    pipeline, and writes the resulting derivatives + a fresh volume-backed
+//    master into the DB. Safe to re-run.
 //
-// 2. Re-stamp QR codes on volume-backed posters.
+// 2. Regenerate previews / thumbnails / mockups on volume-backed posters.
 //    Re-runs the watermark pipeline against every poster's existing master
-//    so the QR badge encodes the current `NEXT_PUBLIC_SITE_URL`. Use this
-//    after a domain change. Skips posters still on `public:` — run the
+//    so derivatives reflect the current pipeline (e.g. after a pipeline
+//    change such as removing the QR stamp, or after a domain change while
+//    QR stamping was active). Skips posters still on `public:` — run the
 //    migration action first for those.
 //
 // Both continue past per-poster errors so one bad file doesn't abort the
@@ -216,8 +217,8 @@ export default async function BackfillPage() {
           <p className="admin-page__eyebrow">Maintenance</p>
           <h1>Poster image maintenance</h1>
           <p className="admin-page__sub">
-            Migrate legacy seeded masters onto the volume, or re-stamp QR
-            codes on every poster after a domain change.
+            Migrate legacy seeded masters onto the volume, or regenerate
+            previews / thumbnails / mockups for every poster.
           </p>
         </div>
       </header>
@@ -248,16 +249,16 @@ export default async function BackfillPage() {
       </section>
 
       <section className="admin-card" style={{ marginBottom: 24 }}>
-        <h2 style={{ marginTop: 0 }}>Re-stamp QR codes</h2>
+        <h2 style={{ marginTop: 0 }}>Regenerate previews</h2>
         <p style={{ margin: 0 }}>
           <strong>{restampable}</strong> volume-backed poster
-          {restampable === 1 ? '' : 's'} ready to re-stamp.
+          {restampable === 1 ? '' : 's'} ready to regenerate.
         </p>
         <p className="admin-muted" style={{ marginTop: 8 }}>
-          Run after a domain change so QR codes encode the current{' '}
-          <code>NEXT_PUBLIC_SITE_URL</code>. Re-uses each poster&apos;s
-          existing master and rewrites preview / thumbnail / mockup
-          derivatives.
+          Re-runs the watermark pipeline against each poster&apos;s existing
+          master and rewrites preview / thumbnail / mockup derivatives. Run
+          after a pipeline change (e.g. removing the QR stamp) so existing
+          posters reflect the current output format.
         </p>
         <form action={runRestamp} style={{ marginTop: 16 }}>
           <button
@@ -265,7 +266,7 @@ export default async function BackfillPage() {
             className="admin-btn-primary"
             disabled={restampable === 0}
           >
-            Re-stamp {restampable} poster{restampable === 1 ? '' : 's'}
+            Regenerate {restampable} poster{restampable === 1 ? '' : 's'}
           </button>
         </form>
       </section>

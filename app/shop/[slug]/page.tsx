@@ -134,7 +134,6 @@ export default async function ProductPage({
                 <path d="M7 10l2 2 4-4" />
               </svg>
               <span>
-                The small QR mark on the preview is for the public listing only.
                 Your downloaded file is{' '}
                 <strong>full resolution, unmarked, and yours to print.</strong>
               </span>

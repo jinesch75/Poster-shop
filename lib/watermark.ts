@@ -2,19 +2,20 @@
 //
 // One master file in → master + preview + thumbnail + two mockups out.
 //
-// Strategy (rebuilt 2026-04-26): resolution is the protection. The clean
-// 4000px+ master stays private, served only via signed download URLs after
-// purchase. The public 1200px preview is gorgeous on screen but useless for
-// printing at any meaningful size — at 300dpi it tops out around postcard
-// size. A tiny QR code in the bottom-right corner points back at our site
-// (`/q/<slug>` → server-side redirect), so any leaked image becomes a
-// scannable advert. The thumbnail is even smaller (500px) and mark-free.
+// Strategy: resolution is the protection. The clean 4000px+ master stays
+// private, served only via signed download URLs after purchase. The public
+// 1200px preview is gorgeous on screen but useless for printing at any
+// meaningful size — at 300dpi it tops out around postcard size. The
+// thumbnail is even smaller (500px) for grid display.
+//
+// Note (2026-05-02): the QR-badge stamp on the preview was removed.
+// The /q/<slug> redirect endpoint, the QrScan model, and lib/qr.ts are
+// retained so QR stamping can be reintroduced later without rewiring.
 
 import sharp from 'sharp';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { putBuffer, readBuffer } from './storage';
-import { qrPngBuffer, qrTargetUrl } from './qr';
 
 // ---------- Asset dimensions ----------
 
@@ -23,15 +24,6 @@ const PREVIEW_TARGET_WIDTH = 1200;
 
 /** Public thumbnail: grid display only. */
 const THUMB_TARGET_WIDTH = 500;
-
-/** QR stamp size as a fraction of the preview's actual width. */
-const QR_FRACTION_OF_WIDTH = 0.085;
-
-/** Inner white pill padding around the QR (each side, in QR pixels). */
-const QR_PILL_PADDING = 8;
-
-/** Distance from the preview edge to the QR pill (each side, as a fraction of preview width). */
-const QR_EDGE_INSET_FRACTION = 0.022;
 
 // ---------- Public types ----------
 
@@ -52,7 +44,10 @@ export type PosterDerivatives = {
  * + two mockups. Returns storage keys for all of them.
  *
  * @param masterBuffer raw bytes of the uploaded master file (PNG/JPG)
- * @param slug         poster slug — baked into the QR code as `/q/<slug>`
+ * @param slug         poster slug — currently unused inside the pipeline,
+ *                     retained on the public API so QR stamping (which
+ *                     bakes `/q/<slug>` into the preview) can be turned
+ *                     back on later without changing call sites.
  * @param ext          original master extension (informs the master file's stored ext)
  */
 export async function processMaster(
@@ -84,46 +79,25 @@ export async function reprocessMaster(
 
 async function runDerivatives(
   masterBuffer: Buffer,
-  slug: string,
+  _slug: string,
   masterKey: string,
 ): Promise<PosterDerivatives> {
   const meta = await sharp(masterBuffer).metadata();
   const width = meta.width ?? 1856;
   const height = meta.height ?? 2464;
 
-  // ---- Preview (1200px + QR) ----------------------------------------
-  // Cap target width at the master's actual width so we never upscale
-  // (sharp errors with "Image to composite must have same dimensions
-  // or smaller" if we try to overlay something bigger than the source).
+  // ---- Preview (1200px) ---------------------------------------------
+  // Cap target width at the master's actual width so we never upscale.
   const previewWidth = Math.min(PREVIEW_TARGET_WIDTH, width);
   const previewHeight = Math.round((height / width) * previewWidth);
 
-  // Render the QR as a real PNG buffer at the target stamp size.
-  // We then frame it in a soft-white rounded "pill" so it scans even
-  // when it lands on top of one of the dark Mondrian colour blocks.
-  const qrSize = Math.round(previewWidth * QR_FRACTION_OF_WIDTH);
-  const qrPng = await qrPngBuffer(qrTargetUrl(slug), qrSize);
-  const qrBadge = await buildQrBadge(qrPng, qrSize);
-  const badgeSize = qrSize + QR_PILL_PADDING * 2;
-  const inset = Math.round(previewWidth * QR_EDGE_INSET_FRACTION);
-
   const previewBuffer = await sharp(masterBuffer)
     .resize({ width: previewWidth, withoutEnlargement: true })
-    .composite([
-      {
-        input: qrBadge,
-        top: previewHeight - badgeSize - inset,
-        left: previewWidth - badgeSize - inset,
-      },
-    ])
     .jpeg({ quality: 82, mozjpeg: true })
     .toBuffer();
   const previewKey = await putBuffer('previews', previewBuffer, 'jpg');
 
-  // ---- Thumbnail (500px, clean) -------------------------------------
-  // No QR on the thumbnail — at 500px wide a QR would be illegible
-  // anyway, and the grid card is small enough that the QR-on-preview
-  // is the public-facing scannable copy.
+  // ---- Thumbnail (500px) --------------------------------------------
   const thumbWidth = Math.min(THUMB_TARGET_WIDTH, width);
   const thumbBuffer = await sharp(masterBuffer)
     .resize({ width: thumbWidth, withoutEnlargement: true })
@@ -132,9 +106,7 @@ async function runDerivatives(
   const thumbnailKey = await putBuffer('thumbnails', thumbBuffer, 'jpg');
 
   // ---- Mockups -------------------------------------------------------
-  // Mockups composite the clean preview onto a room plate. The preview
-  // already carries the QR badge so the mockup gets it for free in the
-  // bottom-right of the framed poster.
+  // Mockups composite the preview onto a room plate.
   const mockupOfficeBuffer = await buildMockup(previewBuffer, previewWidth, previewHeight, 'office');
   const mockupLivingBuffer = await buildMockup(previewBuffer, previewWidth, previewHeight, 'living');
   const mockupOfficeKey = await putBuffer('mockups', mockupOfficeBuffer, 'jpg');
@@ -149,27 +121,6 @@ async function runDerivatives(
     widthPx: width,
     heightPx: height,
   };
-}
-
-// ---------- QR badge ----------
-
-/**
- * Wrap a black-on-white QR PNG in a rounded "pill" so it visually
- * detaches from the artwork and scans reliably on any background.
- */
-async function buildQrBadge(qrPng: Buffer, qrSize: number): Promise<Buffer> {
-  const totalSize = qrSize + QR_PILL_PADDING * 2;
-  const radius = Math.round(QR_PILL_PADDING * 0.6);
-  const pillSvg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${totalSize}" height="${totalSize}">
-      <rect x="0" y="0" width="${totalSize}" height="${totalSize}"
-            rx="${radius}" ry="${radius}"
-            fill="#ffffff" fill-opacity="0.94"/>
-    </svg>`;
-  return sharp(Buffer.from(pillSvg))
-    .composite([{ input: qrPng, top: QR_PILL_PADDING, left: QR_PILL_PADDING }])
-    .png()
-    .toBuffer();
 }
 
 // ---------- Mockup composition ----------
