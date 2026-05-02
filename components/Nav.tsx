@@ -1,8 +1,20 @@
-// Shared top navigation. Server Component — no client state needed.
+// Shared top navigation. Client Component because it reads the current
+// pathname to bold whichever gallery link the visitor is currently on.
+
+'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function Nav() {
+  const pathname = usePathname();
+
+  // Main gallery covers the homepage and per-city pages — those all
+  // belong to the Main collection. Mondrian only matches /mondrian.
+  const isMain =
+    pathname === '/' || pathname.startsWith('/city/');
+  const isMondrian = pathname.startsWith('/mondrian');
+
   return (
     <nav className="top">
       <Link href="/" className="wordmark" aria-label="Gridline Cities — home">
@@ -21,8 +33,12 @@ export function Nav() {
         <span className="wordmark-text">Gridline <span className="studio-sub">Cities</span></span>
       </Link>
       <div className="links">
-        <Link href="/">Main Gallery</Link>
-        <Link href="/mondrian">Mondrian Gallery</Link>
+        <Link href="/" aria-current={isMain ? 'page' : undefined}>
+          Main Gallery
+        </Link>
+        <Link href="/mondrian" aria-current={isMondrian ? 'page' : undefined}>
+          Mondrian Gallery
+        </Link>
       </div>
       {/* Empty third column so the grid centres the links against
           a balanced left/right gutter, regardless of wordmark width. */}

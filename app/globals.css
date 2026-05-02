@@ -166,6 +166,15 @@ nav .links {
   letter-spacing: 0.02em;
 }
 nav .links a { position: relative; padding: 4px 0; }
+/* Active gallery link — bold + a permanent underline so the visitor
+   always knows which collection they're viewing. */
+nav .links a[aria-current="page"] { font-weight: 700; }
+nav .links a[aria-current="page"]::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -2px;
+  height: 1px; background: var(--ink);
+  transform: scaleX(1);
+}
 nav .links a::after {
   content: "";
   position: absolute; left: 0; right: 0; bottom: -2px;
