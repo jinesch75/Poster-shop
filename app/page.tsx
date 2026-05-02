@@ -39,43 +39,34 @@ export default async function HomePage() {
       </section>
 
       {/* ============ CITY SECTIONS ============ */}
-      {cities.map((city) => {
-        const cityPosters = postersByCity[city.slug] ?? [];
-        const hasPosters =
-          city.status === 'AVAILABLE' && cityPosters.length > 0;
+      {/* Only show cities that actually have published posters — cities without
+          uploads yet are hidden from the gallery (they'll appear once a poster
+          is published for them). */}
+      {cities
+        .filter(
+          (city) =>
+            city.status === 'AVAILABLE' &&
+            (postersByCity[city.slug]?.length ?? 0) > 0,
+        )
+        .map((city) => {
+          const cityPosters = postersByCity[city.slug] ?? [];
+          return (
+            <section key={city.slug} className="city-section">
+              <div className="city-heading">
+                <span className="name">{city.name}</span>
+                <span className="status">
+                  {`${String(cityPosters.length).padStart(2, '0')} posters · available`}
+                </span>
+              </div>
 
-        return (
-          <section key={city.slug} className="city-section">
-            <div className="city-heading">
-              <span className="name">{city.name}</span>
-              <span className="status">
-                {hasPosters
-                  ? `${String(cityPosters.length).padStart(2, '0')} posters · available`
-                  : city.statusLabel || 'Coming soon'}
-              </span>
-            </div>
-
-            {hasPosters ? (
               <div className="gallery-grid">
                 {cityPosters.map((p) => (
                   <PosterCard key={p.slug} poster={p} />
                 ))}
               </div>
-            ) : (
-              <div className="coming-soon">
-                <div>
-                  <span className="label">
-                    Pictures <span className="italic">to come.</span>
-                  </span>
-                  <span className="hint">
-                    Subscribe below to be notified
-                  </span>
-                </div>
-              </div>
-            )}
-          </section>
-        );
-      })}
+            </section>
+          );
+        })}
 
       <Footer />
     </>

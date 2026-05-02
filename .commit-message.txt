@@ -1,44 +1,29 @@
-admin: persist backfill report via cookie, not URL query string
+ui: hide poster numbers, hide empty cities, shrink product preview
 
-The previous implementation stuffed every per-poster result row into the
-post-action redirect URL as `?report=<encoded>`. That worked fine for
-small runs but 503'd at production scale: a 21-poster re-stamp produced
-a redirect URL ~1.5 KB long, and Railway's edge timed out (or rejected
-the request) before Next.js could render the result page. The action
-itself completed successfully — only the result-table view was broken.
+Three small storefront tweaks from a customer-feedback pass:
 
-This commit moves the report payload off the URL and into a short-lived
-HTTP cookie. The flow is now:
+1. PosterCard — remove the small "N°XX" badge in the top-left of each
+   gallery thumbnail. The number field is still kept on the Poster
+   record (admin uses it for sorting + the edit form) but it's no
+   longer surfaced anywhere customer-facing. The `.card .no` CSS rule
+   is left in place harmlessly with no element to style — easy to
+   restore later if we want the numbers back.
 
-  1. Action finishes → set `maintenance_report` cookie (httpOnly,
-     SameSite=strict, path-scoped to /admin/maintenance/backfill, 5-min
-     max-age) carrying the same encoded summary string the URL used to.
-  2. Action issues a clean `redirect('/admin/maintenance/backfill')`.
-  3. Page Server Component reads the cookie via `cookies()` from
-     next/headers, parses, renders the existing results table.
+2. app/page.tsx — stop rendering homepage city sections that have no
+   published posters yet. Previously every city in the MAIN gallery
+   rendered, with empty cities falling through to a "Pictures to come"
+   pane. Now the homepage only shows AVAILABLE cities that actually
+   have at least one published poster, mirroring what /mondrian
+   already did. New cities pop into the gallery automatically the
+   moment a poster is published for them.
 
-No behavioural changes for the user: identical result table, identical
-status counts, identical per-row layout. The cookie expires on its own
-after 5 minutes, so a stale browser tab eventually returns to the
-"no last run" state without intervention. Re-running an action within
-5 minutes overwrites the cookie with the new run's results.
+3. globals.css — cap the product-page main preview so it stops
+   dominating the viewport. The image column went from 1.25fr to
+   minmax(260px, 420px) and `.product .main-preview` got a
+   max-width: 420px guard. With aspect-ratio 3/4 that's a max
+   preview of roughly 420×560, which fits above the fold on a
+   typical laptop without forcing the visitor to scroll. Roughly
+   half the previous rendered size on a wide screen.
 
-Implementation details:
-
-- Cookie value is `encodeURIComponent(<the same encoded summary string
-  we used in the URL>)`. URL-encoding before storage keeps the cookie
-  parser happy on commas / pipes / spaces inside per-poster detail
-  strings (e.g. error messages from try/catch).
-- `path: '/admin/maintenance/backfill'` scopes the cookie tightly so
-  it isn't echoed on every admin request.
-- `httpOnly: true` keeps it out of any client-side JS (the page is a
-  Server Component and reads the cookie server-side, so JS access is
-  unnecessary).
-- New helpers `encodeReport(results)` and `persistReport(results)`
-  centralise the cookie-set logic so both `runBackfill` and `runRestamp`
-  call it identically.
-- `BackfillPage` no longer takes `searchParams` — the page reads from
-  cookies, not from the URL.
-
-One file changed: app/admin/maintenance/backfill/page.tsx
-+39 / -18 lines.
+Three files changed: components/PosterCard.tsx, app/page.tsx,
+app/globals.css.

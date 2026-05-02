@@ -5,7 +5,6 @@ import { ProtectedImage } from './ProtectedImage';
 export function PosterCard({ poster }: { poster: PosterView }) {
   return (
     <Link href={`/shop/${poster.slug}`} className="card">
-      <div className="no">{poster.number}</div>
       <div className="thumb">
         <ProtectedImage
           src={poster.file}
