@@ -385,12 +385,14 @@ nav .right .cart .badge {
    the column is narrow (5-up grid on desktop). */
 .card .meta-left { min-width: 0; color: inherit; cursor: pointer; }
 .card .meta-left:hover .title { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
-/* meta-right stacks price on top, cart button below — visually mirrors
-   the title/city stack on the left so the row stays balanced. */
+/* meta-right is an inline row — price first, cart button right after.
+   align-items:center so the small icon visually aligns with the price
+   text mid-line; the outer .meta still has align-items:baseline so the
+   price baselines with the title on the left. */
 .card .meta-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
   gap: 6px;
 }
 
