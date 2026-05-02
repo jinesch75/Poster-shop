@@ -1373,8 +1373,15 @@ nav .right .cart:hover .cart-label {
    hero block fills the previously-empty top band, the image row shows
    the main poster + a living-room mockup + an office triptych mockup,
    and the centered cart block sits below. */
+/* Override .section's generous top padding (72–160px) — the redesign
+   puts the title at the top of the page, so we don't need that much
+   breathing room before the hero. Bottom padding of .section is left
+   alone via the `unset` shorthand replacement below. */
+.section.product-detail {
+  padding-top: clamp(32px, 4vw, 56px);
+}
 .product-detail__hero {
-  margin: 0 0 clamp(40px, 5vw, 72px);
+  margin: 0 0 clamp(20px, 2.5vw, 36px);
   max-width: 980px;
 }
 .product-detail__hero h1 {

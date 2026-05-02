@@ -1,0 +1,25 @@
+{
+  "imageWidth": 928,
+  "imageHeight": 1232,
+  "frames": [
+    {
+      "index": 0,
+      "innerTopLeft": [
+        117,
+        115
+      ],
+      "innerTopRight": [
+        438,
+        115
+      ],
+      "innerBottomRight": [
+        438,
+        593
+      ],
+      "innerBottomLeft": [
+        117,
+        593
+      ]
+    }
+  ]
+}

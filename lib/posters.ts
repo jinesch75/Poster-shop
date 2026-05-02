@@ -33,6 +33,14 @@ export type PosterView = {
   masterHeightPx: number;
   landmarkType: string | null;
   gallery: Gallery;
+  /** Single-frame office mockup URL, or null if not yet generated. */
+  mockupOfficeUrl: string | null;
+  /**
+   * Up to 3 living-room triptych mockup URLs (one per cached sibling pair).
+   * Empty if the poster has fewer than 2 siblings in its gallery, or if
+   * the compositor pipeline hasn't been run on this poster yet.
+   */
+  livingRoomMockupUrls: string[];
 };
 
 export type CityView = {
@@ -65,6 +73,15 @@ function toPosterView(
   // resort is the master (the /api/storage route refuses to serve masters,
   // so this just shows a broken image, which is better than leaking them).
   const previewKey = p.previewKey ?? p.thumbnailKey ?? p.masterKey;
+
+  // Living-room triptych mockup keys are stored as a JSON array on Poster.
+  // Defensive: anything that isn't a string array is treated as no variants.
+  const livingRoomKeys: string[] = Array.isArray(p.livingRoomMockupKeys)
+    ? (p.livingRoomMockupKeys as unknown[]).filter(
+        (k): k is string => typeof k === 'string',
+      )
+    : [];
+
   return {
     id: p.id,
     slug: p.slug,
@@ -80,6 +97,8 @@ function toPosterView(
     masterHeightPx: p.masterHeightPx,
     landmarkType: p.landmarkType,
     gallery: p.gallery,
+    mockupOfficeUrl: p.mockupOfficeKey ? publicUrl(p.mockupOfficeKey) : null,
+    livingRoomMockupUrls: livingRoomKeys.map(publicUrl),
   };
 }
 

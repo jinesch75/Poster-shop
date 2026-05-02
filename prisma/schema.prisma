@@ -45,11 +45,15 @@ model Poster {
 
   // Storage keys (opaque — resolved through lib/storage.ts).
   // Master is private; the rest are public.
-  masterKey       String        // private high-res original
-  previewKey      String?       // ~2400px watermarked
-  thumbnailKey    String?       // ~800px watermarked
-  mockupOfficeKey String?       // room composite
-  mockupLivingKey String?       // room composite
+  masterKey            String        // private high-res original
+  previewKey           String?       // ~2400px watermarked
+  thumbnailKey         String?       // ~800px watermarked
+  mockupOfficeKey      String?       // single-frame office composite
+  // Living-room triptych composite — up to 3 cached variants, one for
+  // each pair of "More from <city/gallery>" siblings that can sit
+  // alongside this poster. Refreshed by refreshLivingRoomMockups().
+  // Stored as a JSON array of opaque storage keys (string[]).
+  livingRoomMockupKeys Json?
 
   masterWidthPx   Int
   masterHeightPx  Int

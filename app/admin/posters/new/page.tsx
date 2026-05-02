@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { processMaster } from '@/lib/watermark';
+import { processMaster, refreshLivingRoomMockups } from '@/lib/watermark';
 import { PosterUploadSchema, firstError } from '@/lib/validation';
 
 export const metadata = { title: 'Upload poster — Gridline Cities Admin' };
@@ -78,8 +78,9 @@ async function createPoster(formData: FormData) {
     failWith('Image processing failed — try a different file or check the master is at least 800px on the long edge.');
   }
 
+  let createdId: string;
   try {
-    await prisma.poster.create({
+    const created = await prisma.poster.create({
       data: {
         slug,
         title,
@@ -92,13 +93,14 @@ async function createPoster(formData: FormData) {
         previewKey: derivatives.previewKey,
         thumbnailKey: derivatives.thumbnailKey,
         mockupOfficeKey: derivatives.mockupOfficeKey,
-        mockupLivingKey: derivatives.mockupLivingKey,
         masterWidthPx: derivatives.widthPx,
         masterHeightPx: derivatives.heightPx,
         priceDigitalCents: Math.round(priceEur * 100),
         status: publish ? 'PUBLISHED' : 'DRAFT',
       },
+      select: { id: true },
     });
+    createdId = created.id;
   } catch (err) {
     // Defensive: catches the rare race where a duplicate slug appears
     // between the findUnique check above and the create call.
@@ -113,6 +115,15 @@ async function createPoster(formData: FormData) {
       );
     }
     throw err;
+  }
+
+  // Build the living-room triptych variants now that the row exists.
+  // Failures here don't block the upload — the page falls back to a
+  // placeholder slot until the maintenance backfill is run.
+  try {
+    await refreshLivingRoomMockups(createdId);
+  } catch (err) {
+    console.error('living-room mockup refresh failed', err);
   }
 
   redirect('/admin/posters');

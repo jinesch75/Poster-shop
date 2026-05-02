@@ -1,0 +1,63 @@
+{
+  "imageWidth": 960,
+  "imageHeight": 1200,
+  "frames": [
+    {
+      "index": 0,
+      "innerTopLeft": [
+        97,
+        220
+      ],
+      "innerTopRight": [
+        336,
+        220
+      ],
+      "innerBottomRight": [
+        336,
+        560
+      ],
+      "innerBottomLeft": [
+        97,
+        560
+      ]
+    },
+    {
+      "index": 1,
+      "innerTopLeft": [
+        363,
+        223
+      ],
+      "innerTopRight": [
+        595,
+        223
+      ],
+      "innerBottomRight": [
+        595,
+        560
+      ],
+      "innerBottomLeft": [
+        363,
+        560
+      ]
+    },
+    {
+      "index": 2,
+      "innerTopLeft": [
+        623,
+        223
+      ],
+      "innerTopRight": [
+        859,
+        223
+      ],
+      "innerBottomRight": [
+        859,
+        560
+      ],
+      "innerBottomLeft": [
+        623,
+        560
+      ]
+    }
+  ]
+}

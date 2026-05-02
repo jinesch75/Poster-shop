@@ -11,7 +11,7 @@
 
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { processMaster } from '@/lib/watermark';
+import { processMaster, refreshLivingRoomMockups } from '@/lib/watermark';
 
 const DEFAULT_DESCRIPTION_BY_CITY: Record<string, string> = {
   london:
@@ -127,7 +127,7 @@ export async function runQuickUpload(formData: FormData): Promise<void> {
       const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
       const derivatives = await processMaster(buffer, ext);
       const number = await nextPosterNumber();
-      await prisma.poster.create({
+      const created = await prisma.poster.create({
         data: {
           slug: posterSlug,
           title: deriveTitle(file.name),
@@ -140,13 +140,27 @@ export async function runQuickUpload(formData: FormData): Promise<void> {
           previewKey: derivatives.previewKey,
           thumbnailKey: derivatives.thumbnailKey,
           mockupOfficeKey: derivatives.mockupOfficeKey,
-          mockupLivingKey: derivatives.mockupLivingKey,
           masterWidthPx: derivatives.widthPx,
           masterHeightPx: derivatives.heightPx,
           priceDigitalCents: 500,
           status: 'DRAFT',
         },
+        select: { id: true },
       });
+      // Build the living-room triptych variants now that the row exists
+      // (the compositor needs to query siblings, which it can only do
+      // once this poster is in the DB). Failures don't roll back the
+      // upload — a poster with no living-room variants falls back to
+      // the placeholder slot on the product page and can be retried via
+      // the maintenance backfill page.
+      try {
+        await refreshLivingRoomMockups(created.id);
+      } catch (err) {
+        console.error(
+          `living-room mockup refresh failed for ${posterSlug}`,
+          err,
+        );
+      }
       results.push({ posterSlug, status: 'imported' });
     } catch (err) {
       console.error(`quick-upload failed for ${posterSlug}`, err);

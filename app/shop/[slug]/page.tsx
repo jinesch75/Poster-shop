@@ -4,7 +4,7 @@ import { PosterCard } from '@/components/PosterCard';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { BuyRow } from '@/components/BuyRow';
-import { OfficeMockupRandom } from '@/components/OfficeMockupRandom';
+import { LivingRoomMockupRandom } from '@/components/LivingRoomMockupRandom';
 import {
   getPosterBySlug,
   getPublishedPosterSlugs,
@@ -57,13 +57,18 @@ export default async function ProductPage({
     poster.masterHeightPx,
   );
 
-  // Mockup URLs aren't wired into PosterView yet — that lands once the
-  // compositor pipeline is updated to produce portrait variants and the
-  // Prisma schema gains the office-mockup-keys array. For now both slots
-  // fall back to grey-frame placeholders so we can review the new layout
-  // in isolation.
-  const livingMockupUrl: string | undefined = undefined;
-  const officeMockupUrls: string[] | undefined = undefined;
+  // Mockup URLs come from PosterView. Living-room is an array of up to
+  // 3 cached triptych variants (each a different sibling pairing); the
+  // client component picks one at random on mount. Office is a single
+  // image of just the main poster on a wall.
+  //
+  // An empty array (or null office) means the compositor hasn't been
+  // run for this poster yet, or — for living-room only — the gallery
+  // has fewer than 2 siblings to bookend it. The corresponding slot
+  // falls back to a grey-frame placeholder.
+  const livingMockupUrls: string[] | undefined =
+    poster.livingRoomMockupUrls.length > 0 ? poster.livingRoomMockupUrls : undefined;
+  const officeMockupUrl: string | undefined = poster.mockupOfficeUrl ?? undefined;
 
   return (
     <>
@@ -91,11 +96,19 @@ export default async function ProductPage({
             />
           </div>
 
-          {livingMockupUrl ? (
+          {/* Living-room triptych — randomised across cached variants
+              (each variant pairs the main poster with two siblings). */}
+          <LivingRoomMockupRandom
+            urls={livingMockupUrls}
+            alt={`${poster.title} in a living-room triptych`}
+          />
+
+          {/* Office single — just the main poster on its own. */}
+          {officeMockupUrl ? (
             <div className="product-detail__frame">
               <ProtectedImage
-                src={livingMockupUrl}
-                alt={`${poster.title} in a living room`}
+                src={officeMockupUrl}
+                alt={`${poster.title} in an office`}
                 width={1200}
                 height={1600}
                 sizes="(max-width: 900px) 100vw, 33vw"
@@ -104,17 +117,12 @@ export default async function ProductPage({
           ) : (
             <div
               className="product-detail__frame product-detail__frame--placeholder"
-              aria-label="Living room mockup — placeholder"
+              aria-label="Office mockup — placeholder"
             >
-              <span className="product-detail__ph-label">Living room</span>
+              <span className="product-detail__ph-label">Office</span>
               <span className="product-detail__ph-hint">Mockup coming soon</span>
             </div>
           )}
-
-          <OfficeMockupRandom
-            urls={officeMockupUrls}
-            alt={`${poster.title} hung in an office triptych`}
-          />
         </div>
 
         {/* Centered cart block — capped at ~600px so the price, buttons

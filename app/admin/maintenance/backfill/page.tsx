@@ -23,7 +23,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { prisma } from '@/lib/prisma';
 import { putBuffer } from '@/lib/storage';
-import { reprocessMaster } from '@/lib/watermark';
+import { reprocessMaster, refreshLivingRoomMockups } from '@/lib/watermark';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Backfill — Gridline Cities Admin' };
@@ -97,11 +97,15 @@ async function runBackfill(): Promise<void> {
           previewKey: derivatives.previewKey,
           thumbnailKey: derivatives.thumbnailKey,
           mockupOfficeKey: derivatives.mockupOfficeKey,
-          mockupLivingKey: derivatives.mockupLivingKey,
           masterWidthPx: derivatives.widthPx,
           masterHeightPx: derivatives.heightPx,
         },
       });
+      // 5. Build the living-room triptych variants. Done per-poster as
+      //    we go; triptychs may reference neighbouring posters that
+      //    haven't been migrated yet, so re-running this action after
+      //    a full pass converges the gallery to a stable set of pairs.
+      await refreshLivingRoomMockups(poster.id);
 
       results.push({ slug: poster.slug, status: 'migrated' });
     } catch (err) {
@@ -148,11 +152,16 @@ async function runRegenerate(): Promise<void> {
           previewKey: derivatives.previewKey,
           thumbnailKey: derivatives.thumbnailKey,
           mockupOfficeKey: derivatives.mockupOfficeKey,
-          mockupLivingKey: derivatives.mockupLivingKey,
           masterWidthPx: derivatives.widthPx,
           masterHeightPx: derivatives.heightPx,
         },
       });
+      // Living-room triptych variants are rebuilt per-poster. They may
+      // reference siblings that haven't been regenerated yet — running
+      // this action a second time after a full pass converges to a stable
+      // set of pairs (each poster reading the latest preview of its
+      // neighbours).
+      await refreshLivingRoomMockups(poster.id);
 
       results.push({ slug: poster.slug, status: 'regenerated' });
     } catch (err) {

@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { publicUrl } from '@/lib/storage';
-import { processMaster, reprocessMaster } from '@/lib/watermark';
+import {
+  processMaster,
+  reprocessMaster,
+  refreshLivingRoomMockups,
+} from '@/lib/watermark';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,9 +50,17 @@ async function regeneratePreviews(id: string) {
       previewKey: derivatives.previewKey,
       thumbnailKey: derivatives.thumbnailKey,
       mockupOfficeKey: derivatives.mockupOfficeKey,
-      mockupLivingKey: derivatives.mockupLivingKey,
     },
   });
+  // Rebuild the living-room triptych variants with the freshly regenerated
+  // preview. Surfacing the failure to the admin matters here (unlike the
+  // upload path) because the operator explicitly asked for a regeneration.
+  try {
+    await refreshLivingRoomMockups(id);
+  } catch (err) {
+    console.error('living-room mockup refresh failed', err);
+    redirect(`/admin/posters/${id}?error=living-room-refresh-failed`);
+  }
   redirect(`/admin/posters/${id}?ok=regenerated`);
 }
 
@@ -87,11 +99,18 @@ async function replaceMaster(id: string, formData: FormData) {
       previewKey: derivatives.previewKey,
       thumbnailKey: derivatives.thumbnailKey,
       mockupOfficeKey: derivatives.mockupOfficeKey,
-      mockupLivingKey: derivatives.mockupLivingKey,
       masterWidthPx: derivatives.widthPx,
       masterHeightPx: derivatives.heightPx,
     },
   });
+  // The poster's preview just changed, so its triptych variants are stale.
+  // Rebuild them.
+  try {
+    await refreshLivingRoomMockups(id);
+  } catch (err) {
+    console.error('living-room mockup refresh failed', err);
+    redirect(`/admin/posters/${id}?error=living-room-refresh-failed`);
+  }
   redirect(`/admin/posters/${id}?ok=master-replaced`);
 }
 
@@ -125,7 +144,15 @@ export default async function AdminPosterEdit({
 
   const preview = publicUrl(poster.previewKey ?? poster.masterKey);
   const officeMockup = publicUrl(poster.mockupOfficeKey);
-  const livingMockup = publicUrl(poster.mockupLivingKey);
+  // Living-room triptych is stored as a JSON array of cached storage keys
+  // (one per sibling pairing). Anything that isn't a string array is
+  // treated as no variants — the page just won't render the mockup row.
+  const livingMockupKeys: string[] = Array.isArray(poster.livingRoomMockupKeys)
+    ? (poster.livingRoomMockupKeys as unknown[]).filter(
+        (k): k is string => typeof k === 'string',
+      )
+    : [];
+  const livingMockupUrls = livingMockupKeys.map(publicUrl);
   const isLegacyPublic = poster.masterKey.startsWith('public:');
 
   const successMessage =
@@ -179,16 +206,24 @@ export default async function AdminPosterEdit({
           <div className="admin-preview-row">
             {officeMockup && (
               <div className="admin-preview">
-                <Image src={officeMockup} alt="Office mockup" width={800} height={550} unoptimized />
+                <Image src={officeMockup} alt="Office mockup" width={600} height={800} unoptimized />
                 <p className="admin-preview__caption">Office mockup</p>
               </div>
             )}
-            {livingMockup && (
-              <div className="admin-preview">
-                <Image src={livingMockup} alt="Living room mockup" width={800} height={550} unoptimized />
-                <p className="admin-preview__caption">Living room mockup</p>
+            {livingMockupUrls.map((url, i) => (
+              <div key={url} className="admin-preview">
+                <Image
+                  src={url}
+                  alt={`Living-room triptych variant ${i + 1}`}
+                  width={600}
+                  height={750}
+                  unoptimized
+                />
+                <p className="admin-preview__caption">
+                  Living-room triptych #{i + 1}
+                </p>
               </div>
-            )}
+            ))}
           </div>
           <form action={regenerate}>
             <button type="submit" className="admin-btn-ghost">
@@ -204,9 +239,9 @@ export default async function AdminPosterEdit({
             <h3>Replace master image</h3>
             <p className="admin-muted">
               Upload a new master file (PNG or JPG, up to 50MB). The watermarked
-              preview, thumbnail, and both room mockups will be regenerated
-              automatically. The poster&apos;s title, slug, and metadata stay
-              unchanged.
+              preview, thumbnail, office mockup, and living-room triptych
+              variants will all be regenerated automatically. The poster&apos;s
+              title, slug, and metadata stay unchanged.
               {isLegacyPublic && (
                 <>
                   {' '}

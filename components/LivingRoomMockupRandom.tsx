@@ -1,16 +1,17 @@
 'use client';
 
-// Office triptych mockup, randomised client-side.
+// Living-room triptych mockup, randomised client-side.
 //
-// The compositor produces up to three office-mockup variants per poster
-// (one for each pair of "More from <city/gallery>" siblings shown next
-// to the main poster). To make repeat visits feel fresh, we ship all
-// three URLs to the browser and pick one at random on mount.
+// The compositor produces up to three living-room mockup variants per
+// poster — one for each pair of "More from <city/gallery>" siblings
+// that can sit alongside the main poster in the triptych. To make
+// repeat visits feel fresh, we ship all three URLs to the browser and
+// pick one at random on mount.
 //
-// SSR-stable initial index of 0 avoids a hydration mismatch; the visible
-// swap to the randomly-picked variant after hydration is brief and
-// acceptable for v1. ISR continues to cache the HTML — the randomness
-// happens entirely in the browser.
+// SSR-stable initial index of 0 avoids a hydration mismatch; the
+// visible swap to the randomly-picked variant after hydration is brief
+// and acceptable for v1. ISR continues to cache the HTML — the
+// randomness happens entirely in the browser.
 //
 // When called without URLs (compositor not yet wired up, or fewer than
 // 2 siblings exist in the gallery), renders a styled placeholder so the
@@ -20,12 +21,12 @@ import { useEffect, useState } from 'react';
 import { ProtectedImage } from './ProtectedImage';
 
 type Props = {
-  /** URLs of the cached office mockup variants. Empty / undefined → placeholder. */
+  /** URLs of cached living-room mockup variants. Empty / undefined → placeholder. */
   urls?: string[];
   alt: string;
 };
 
-export function OfficeMockupRandom({ urls, alt }: Props) {
+export function LivingRoomMockupRandom({ urls, alt }: Props) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -38,9 +39,9 @@ export function OfficeMockupRandom({ urls, alt }: Props) {
     return (
       <div
         className="product-detail__frame product-detail__frame--placeholder"
-        aria-label="Office mockup — placeholder"
+        aria-label="Living-room mockup — placeholder"
       >
-        <span className="product-detail__ph-label">Office mockup</span>
+        <span className="product-detail__ph-label">Living-room mockup</span>
         <span className="product-detail__ph-hint">Coming soon</span>
       </div>
     );
