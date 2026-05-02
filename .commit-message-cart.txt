@@ -69,12 +69,13 @@ What changed
   Server Component.
 
 * components/PosterCardCartButton.tsx (new) + components/PosterCard.tsx
-  refactor — small bag icon overlaid on the bottom-right of every
-  gallery thumb. Outlined ink-coloured bag when the poster isn't in
-  the cart, filled accent-teal bag with a paper-coloured checkmark
-  when it is. One tap toggles. PosterCard restructured so the cart
-  button is a sibling of the Link (not nested inside it), avoiding
-  invalid button-in-anchor markup.
+  refactor — small bag icon button beside the price in the meta row of
+  every gallery card (below the artwork, not overlaid on it).
+  Outlined mute-grey bag when the poster isn't in the cart, filled
+  accent-teal bag with a paper-coloured checkmark when it is. One tap
+  toggles. PosterCard now uses two Links (one wrapping the thumb, one
+  wrapping the title/city text) plus the cart button as a sibling, so
+  no interactive elements are nested.
 
 * app/checkout/success/page.tsx — renders <CartClearOnMount /> inside
   the isPaid block.
