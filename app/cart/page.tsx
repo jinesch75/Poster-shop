@@ -7,10 +7,15 @@
 // Submitting "Checkout" posts the slugs (joined with commas) into a
 // hidden form input handled by startCheckoutForCart, which validates
 // and creates a Stripe Checkout Session covering all items.
+//
+// Suspense wrapper: Next 15 refuses to prerender a page that calls
+// useSearchParams() unless it's inside a Suspense boundary. The default
+// export here is a thin wrapper that provides that boundary; CartContents
+// holds the actual logic.
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Nav } from '@/components/Nav';
@@ -21,6 +26,40 @@ import { getCartPreviews, type CartLineView } from '@/app/actions/cart';
 import { startCheckoutForCart } from '@/app/actions/checkout';
 
 export default function CartPage() {
+  return (
+    <Suspense fallback={<CartShell />}>
+      <CartContents />
+    </Suspense>
+  );
+}
+
+/**
+ * Static shell rendered while CartContents waits for client-side
+ * hydration of the searchParams hook. Matches the eventual layout so
+ * there's no jarring shift when the real content swaps in.
+ */
+function CartShell() {
+  return (
+    <>
+      <Nav />
+      <section className="section">
+        <div className="cart-page">
+          <div className="eyebrow">
+            <span className="num">Your cart</span>
+            <span className="mono-label" />
+          </div>
+          <h2 className="title">
+            Cart<span className="italic">.</span>
+          </h2>
+          <div className="cart-loading aside">Loading your cart…</div>
+        </div>
+      </section>
+      <Footer />
+    </>
+  );
+}
+
+function CartContents() {
   const { items, count, hydrated, remove } = useCart();
   const searchParams = useSearchParams();
   const wasCancelled = searchParams.get('cancelled') === '1';

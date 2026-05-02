@@ -59,6 +59,9 @@ What changed
   remove, subtotal, "Checkout · €X" form posting to startCheckoutForCart.
   Empty state when count = 0. Banner variants for ?cancelled=1 (visitor
   bounced from Stripe) and ?stale=1 (every cart entry is unpublished/gone).
+  Wrapped in <Suspense> — Next 15 refuses to prerender pages calling
+  useSearchParams() without a boundary. The shell fallback matches the
+  hydrated layout so there is no shift when content swaps in.
 
 * components/CartClearOnMount.tsx (new) — tiny client island used on the
   PAID branch of the success page to clear localStorage so a return
@@ -103,5 +106,9 @@ Verification
 ------------
 * tsc --noEmit passes (typechecked in /tmp because the iCloud .prisma
   cache is read-only; results are equivalent to an in-place run).
+* `next build` completes cleanly in /tmp with all 17 routes generated;
+  /cart prerenders as static. The Prisma "can't reach DB" warnings
+  during build are pre-existing — Railway doesn't expose Postgres at
+  build time and the relevant queries fall through.
 * No git operations performed (iCloud blocks .git/index.lock cleanup).
   Stage and commit manually from your terminal.
