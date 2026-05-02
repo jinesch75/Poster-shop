@@ -49,7 +49,7 @@ export async function sendReceiptEmail(args: SendReceiptArgs) {
   const sessionId = args.stripeSessionId ?? order.stripeSessionId;
   const orderUrl = sessionId
     ? absoluteUrl(`/checkout/success?sid=${encodeURIComponent(sessionId)}`)
-    : absoluteUrl(`/shop`);
+    : absoluteUrl(`/`);
 
   const items = order.items.map((item) => ({
     title: item.poster?.title ?? 'Gridline Cities poster',

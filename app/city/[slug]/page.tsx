@@ -116,8 +116,8 @@ export default async function CityPage({
             marginTop: 64,
           }}
         >
-          <Link className="btn-ghost" href="/shop">
-            ← Back to the full catalogue
+          <Link className="btn-ghost" href="/">
+            ← Back to the gallery
           </Link>
         </div>
       </section>

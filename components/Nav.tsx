@@ -21,10 +21,12 @@ export function Nav() {
         <span className="wordmark-text">Gridline <span className="studio-sub">Cities</span></span>
       </Link>
       <div className="links">
-        <Link href="/shop">Shop</Link>
-        <Link href="/mondrian">Mondrian</Link>
-        <Link href="/about">About</Link>
+        <Link href="/">Main Gallery</Link>
+        <Link href="/mondrian">Mondrian Gallery</Link>
       </div>
+      {/* Empty third column so the grid centres the links against
+          a balanced left/right gutter, regardless of wordmark width. */}
+      <div className="nav-spacer" aria-hidden="true" />
     </nav>
   );
 }

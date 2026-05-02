@@ -1,9 +1,9 @@
 // Auto-generated sitemap for SEO.
 //
-// Lists every published poster, every available city, plus the homepage,
-// /shop, and /about. Rebuilt on each request so newly-published posters
-// appear without a redeploy. Excludes admin, api, and the /q redirect
-// endpoint — those are also blocked in robots.txt.
+// Lists every published poster, every available city, plus the two
+// gallery roots (/ and /mondrian). Rebuilt on each request so newly-
+// published posters appear without a redeploy. Excludes admin, api,
+// and the /q redirect endpoint — those are also blocked in robots.txt.
 
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
@@ -36,9 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticEntries: MetadataRoute.Sitemap = [
     { url: absoluteUrl('/'), lastModified: now, changeFrequency: 'weekly', priority: 1 },
-    { url: absoluteUrl('/shop'), lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: absoluteUrl('/mondrian'), lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: absoluteUrl('/about'), lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
   const cityEntries: MetadataRoute.Sitemap = cities.map((c) => ({

@@ -76,15 +76,29 @@ export default async function ProductPage({
 
           <div className="info">
             <div className="breadcrumb">
-              <Link
-                href="/shop"
-                style={{
-                  borderBottom: '1px solid var(--rule-strong)',
-                  paddingBottom: 1,
-                }}
-              >
-                Shop
-              </Link>{' '}
+              {/* Breadcrumb sends the visitor back to the gallery they came
+                  from — Mondrian-style poster → /mondrian, otherwise → /. */}
+              {poster.gallery === 'MONDRIAN' ? (
+                <Link
+                  href="/mondrian"
+                  style={{
+                    borderBottom: '1px solid var(--rule-strong)',
+                    paddingBottom: 1,
+                  }}
+                >
+                  Mondrian Gallery
+                </Link>
+              ) : (
+                <Link
+                  href="/"
+                  style={{
+                    borderBottom: '1px solid var(--rule-strong)',
+                    paddingBottom: 1,
+                  }}
+                >
+                  Main Gallery
+                </Link>
+              )}{' '}
               /{' '}
               <Link
                 href={`/city/${poster.citySlug}`}

@@ -23,8 +23,8 @@ export default function CheckoutCancelPage() {
             whenever you&apos;re ready.
           </p>
           <div className="checkout-success__back">
-            <Link className="btn-ghost" href="/shop">
-              ← Back to the catalogue
+            <Link className="btn-ghost" href="/">
+              ← Back to the gallery
             </Link>
           </div>
         </div>

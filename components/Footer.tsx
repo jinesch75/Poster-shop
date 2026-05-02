@@ -15,8 +15,6 @@ export function Footer() {
         <NewsletterForm source="footer" />
       </div>
       <div className="links">
-        <Link href="/about">About</Link>
-        <span className="sep">·</span>
         <Link href="/legal/terms">Terms</Link>
         <span className="sep">·</span>
         <Link href="/legal/privacy">Privacy</Link>

@@ -1,0 +1,40 @@
+Simplify nav: two centered gallery links, drop Shop and About
+
+Top nav now shows just the two gallery destinations, centered:
+  Main Gallery     → /
+  Mondrian Gallery → /mondrian
+
+The wordmark stays top-left. The bar uses a 3-column grid so the
+links sit dead-centre against the viewport, regardless of wordmark
+width. On narrow screens the nav stacks (wordmark over centered
+links) instead of hiding the links.
+
+Removed surfaces:
+  /shop         catalogue index → 308 permanent redirect to /
+  /about                        → 308 permanent redirect to /
+Both pages keep tiny stub files (permanentRedirect from
+next/navigation) so old bookmarks, QR posters, Brevo emails and
+Google's index don't 404. SEO authority transfers to the homepage.
+
+Product pages (/shop/[slug]) and the rest of the buy/checkout
+flow are unchanged.
+
+Updated back-links that previously pointed at /shop:
+  product breadcrumb       → / for MAIN posters, /mondrian for MONDRIAN
+  /city/[slug] back button → /
+  /checkout/success        → /
+  /checkout/cancel         → /
+  receipt.ts fallback URL  → /
+
+Footer drops the About link (and its separator); legal links stay.
+sitemap.ts drops /shop and /about; keeps / and /mondrian plus the
+per-city and per-poster entries.
+
+Verified: tsc --noEmit clean, grep finds no stray /shop or /about
+hrefs anywhere except the deliberate stubs.
+
+Note: app/shop/page.tsx and app/about/page.tsx are now tiny redirect
+stubs because the iCloud sandbox couldn't unlink them. If you want
+them gone for good, `rm app/shop/page.tsx app/about/page.tsx` from
+the terminal — the redirects are at the framework level so deleting
+the stubs is safe.
