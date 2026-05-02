@@ -1401,12 +1401,19 @@ nav .right .cart:hover .cart-label {
 /* Two-column outer grid: main poster on the left, the pair of mockups
    on the right. Bigger gap here lets the main poster breathe and read
    as the hero; inside the mockup pair we use a tighter gap so the two
-   mockups still feel grouped. */
+   mockups still feel grouped.
+   `max-width: 80%` shrinks the entire trio to 80% of the section width
+   (the "reduce by 20%" tweak) and `margin: 0 auto` re-centres it.
+   `align-items: center` keeps the shorter mockup pair vertically
+   aligned to the centre of the taller main poster — the main column
+   is wider, so its 3:4 aspect makes it taller than the mockup columns. */
 .product-detail__images {
   display: grid;
   grid-template-columns: 1.15fr 2fr;
   gap: clamp(40px, 5vw, 80px);
-  margin-bottom: clamp(48px, 6vw, 80px);
+  max-width: 80%;
+  margin: 0 auto clamp(48px, 6vw, 80px);
+  align-items: center;
 }
 .product-detail__mockups {
   display: grid;
@@ -1503,6 +1510,9 @@ nav .right .cart:hover .cart-label {
   .product-detail__images {
     grid-template-columns: 1fr;
     gap: 22px;
+    /* The 80% desktop cap would leave too little width on phones; use
+       full width and let the section padding handle the gutters. */
+    max-width: none;
   }
   /* On mobile the two-column nested layout collapses to a single column,
      so the inner mockup pair becomes a vertical stack matching the rest. */
