@@ -1425,6 +1425,15 @@ nav .right .cart:hover .cart-label {
   text-align: center;
   padding: 24px;
 }
+/* The main poster column gets the same chunky black border + drop shadow
+   used on gallery cards, so it reads as the framed hero of the trio. The
+   mockup columns are room scenes with their own frames inside the
+   photo, so they don't get this treatment — a heavy outer border would
+   fight the frames in the picture. */
+.product-detail__frame--main {
+  border: 6px solid var(--ink);
+  box-shadow: var(--shadow-rest);
+}
 .product-detail__ph-label {
   font-family: var(--display);
   font-size: clamp(15px, 1.6vw, 20px);

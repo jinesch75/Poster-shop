@@ -85,7 +85,7 @@ export default async function ProductPage({
         {/* Three equal portrait columns: main poster · living-room mockup
             · office triptych mockup. Stacks to a single column on mobile. */}
         <div className="product-detail__images">
-          <div className="product-detail__frame">
+          <div className="product-detail__frame product-detail__frame--main">
             <ProtectedImage
               src={poster.file}
               alt={poster.title}
