@@ -1,0 +1,25 @@
+emails: replace brosiusjacques@gmail.com with hello@gridlinecities.com
+
+Customer-facing surfaces leaked the personal admin Gmail address. The
+receipt template printed "or email brosiusjacques@gmail.com and we'll
+re-issue it" because lib/receipt.ts fell back to that string when the
+ADMIN_EMAIL env var wasn't set. The legal pages also rendered the
+personal Gmail as the trader contact.
+
+Now that hello@gridlinecities.com is wired up (Porkbun forwarding to
+gridlinecities@gmail.com, verified working 2026-05-02), every public
+email surface should use the branded address.
+
+Replaced in:
+  lib/receipt.ts          — supportEmail fallback default
+  lib/legal-info.ts       — trader contact email (used by all legal
+                            pages: imprint, privacy, terms, etc.)
+  .env.example            — BREVO_SENDER_EMAIL example value
+  .env.example            — ADMIN_EMAIL example value
+
+No other references remain — verified by grepping the repo for
+`brosiusjacques` and `jacquesbrosius` (both case-insensitive).
+
+Railway action required after deploy:
+  set ADMIN_EMAIL=hello@gridlinecities.com
+  (or delete the env var entirely so the new code default kicks in)
