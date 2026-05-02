@@ -60,7 +60,7 @@ export async function sendReceiptEmail(args: SendReceiptArgs) {
       : orderUrl,
   }));
 
-  const supportEmail = process.env.ADMIN_EMAIL || 'brosiusjacques@gmail.com';
+  const supportEmail = process.env.ADMIN_EMAIL || 'hello@gridlinecities.com';
 
   const { html, text } = renderReceipt({
     orderShortId: order.id.slice(-8).toUpperCase(),

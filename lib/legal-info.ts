@@ -26,8 +26,8 @@ export const LEGAL = {
   businessPermit: null as string | null,
   /** RCS number if the trader is registered with the Registre de Commerce. */
   rcsNumber: null as string | null,
-  /** Contact email — also the Stripe admin email. */
-  email: 'brosiusjacques@gmail.com',
+  /** Contact email — public-facing, forwarded by Porkbun to gridlinecities@gmail.com. */
+  email: 'hello@gridlinecities.com',
 } as const;
 
 /**
