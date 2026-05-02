@@ -1,0 +1,107 @@
+Add multi-item cart with localStorage backing
+
+Background
+----------
+The product page had a single "Add to cart · download now" button that
+actually skipped the cart and went straight to a one-item Stripe Checkout.
+Visitors who wanted several posters had to check out separately each time,
+and the bookmark/save icon next to the button was a placeholder with no
+handler. This change wires up a real cart so multiple posters can be
+purchased in one Stripe session, without forcing visitors to create
+accounts.
+
+The Order/OrderItem schema, the Stripe webhook, the receipt email, the
+success page, and the refund handler were already iterating over an
+items array — they did not need changes. The work was almost entirely
+on the client + the checkout entry-point.
+
+What changed
+------------
+* lib/cart.ts (new) — localStorage-backed cart, useCart() hook with
+  {items, count, hydrated, add, remove, clear, has}. SSR-safe; subscribes
+  to a same-tab CustomEvent and the cross-tab `storage` event so all
+  consumers stay in sync. Idempotent add (digital goods → no quantities).
+
+* lib/checkout.ts — renamed createCheckoutForPoster → createCheckoutForCart,
+  takes an array of CheckoutPosterInput, builds N OrderItems and N Stripe
+  line_items in one session. Kept a thin createCheckoutForPoster wrapper
+  for the "Buy now" path. Cancel URL routes to /cart for multi-item, to
+  /shop/[slug] for single-item.
+
+* app/actions/checkout.ts — added startCheckoutForCart server action
+  that takes a comma-separated `slugs` form field, validates each is
+  PUBLISHED, drops stale ones (redirects to /cart?stale=1 if all are
+  gone), and creates the Stripe session. Caps cart at 25 items.
+
+* app/actions/cart.ts (new) — getCartPreviews(slugs) server action used
+  by /cart to hydrate poster details (title, price, preview image) from
+  the DB on every render so a stale cart can't show a stale price.
+
+* components/CartLink.tsx (new) — bag icon + count badge, replaces the
+  empty grid-spacer in the right nav column. Renders an inert spacer
+  until hydrated to prevent layout shift / hydration warnings.
+
+* components/Nav.tsx — drops <div className="nav-spacer" /> in favour of
+  <CartLink />.
+
+* components/BuyRow.tsx (new) — client wrapper for the product-page
+  buttons. Two CTAs side-by-side: "Add to cart" (toggles localStorage,
+  shows "Added ✓" briefly) and "Buy now" (existing single-item flow).
+  Replaces the old single-button + placeholder bookmark icon.
+
+* app/shop/[slug]/page.tsx — swaps the inline form + bookmark stub for
+  <BuyRow slug={...} stripeReady={stripeConfigured()} />. stripeReady is
+  resolved on the server because STRIPE_SECRET_KEY is not exposed to
+  the browser.
+
+* app/cart/page.tsx (new) — full cart page. Loads slugs from useCart,
+  hydrates via getCartPreviews, shows rows with thumbnail/title/price/
+  remove, subtotal, "Checkout · €X" form posting to startCheckoutForCart.
+  Empty state when count = 0. Banner variants for ?cancelled=1 (visitor
+  bounced from Stripe) and ?stale=1 (every cart entry is unpublished/gone).
+
+* components/CartClearOnMount.tsx (new) — tiny client island used on the
+  PAID branch of the success page to clear localStorage so a return
+  visit doesn't show paid-for items. Lets the success page stay a
+  Server Component.
+
+* app/checkout/success/page.tsx — renders <CartClearOnMount /> inside
+  the isPaid block.
+
+* app/globals.css — appended:
+  - nav .right .cart hover/label rules
+  - .buy-row--cart two-column variant
+  - .btn-full--secondary (paper-warm fill so "Buy now" stays primary)
+  - .cart-page, .cart-list, .cart-row, .cart-summary block
+  - .cart-banner / .cart-empty / .cart-loading
+  - mobile breakpoints for the cart row and the two-button buy row
+
+What is unchanged
+-----------------
+* Order / OrderItem schema. The webhook, receipt email, success page,
+  refund handler all already loop over items.
+* Single-poster instant-buy is still possible via "Buy now".
+
+Trade-offs / known limits
+-------------------------
+* Cart is per-device-per-browser — visitor's phone cart ≠ laptop cart.
+  This is the cost of "no accounts" and is the same trade-off every
+  Shopify store at this scale makes.
+* No quantities — buying the same digital PNG twice is meaningless.
+  Cart de-dupes by slug; second add is a no-op.
+* Server is the source of truth for price + availability at checkout
+  time. A stale cart can't underpay.
+
+Out of scope (do these by hand)
+-------------------------------
+* Stripe Dashboard → Settings → Public details → Public business name:
+  rename "Linework Studio" → "Gridline Cities". The `appInfo` field on
+  the Stripe SDK already says "Gridline Cities", so the only remaining
+  "Pay Linework Studio" string is the Stripe-side merchant profile.
+
+Verification
+------------
+* tsc --noEmit passes (typechecked in /tmp because the iCloud .prisma
+  cache is read-only; results are equivalent to an in-place run).
+* No git operations performed (iCloud blocks .git/index.lock cleanup).
+  Stage and commit manually from your terminal.

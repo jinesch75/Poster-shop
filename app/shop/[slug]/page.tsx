@@ -9,8 +9,8 @@ import {
   getPublishedPosterSlugs,
   getRelatedPosters,
 } from '@/lib/posters';
-import { startCheckoutForPoster } from '@/app/actions/checkout';
 import { stripeConfigured } from '@/lib/stripe';
+import { BuyRow } from '@/components/BuyRow';
 import { largestSharpPrintSize } from '@/lib/print-size';
 
 // Regenerate product pages when content changes; don't force dynamic
@@ -146,37 +146,13 @@ export default async function ProductPage({
               <div className="total-value">€{poster.priceEur}.00</div>
             </div>
 
-            <form action={startCheckoutForPoster} className="buy-row">
-              <input type="hidden" name="slug" value={poster.slug} />
-              <button
-                type="submit"
-                className="btn-full"
-                disabled={!stripeConfigured()}
-                title={
-                  stripeConfigured()
-                    ? 'Pay securely with Stripe — download delivered immediately'
-                    : 'Checkout is temporarily unavailable. Please try again shortly.'
-                }
-              >
-                Add to cart · download now
-              </button>
-              <button
-                type="button"
-                className="btn-icon"
-                aria-label="Save"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                >
-                  <path d="M6 3h12v18l-6-4-6 4z" />
-                </svg>
-              </button>
-            </form>
+            {/* Two-button buy row: "Add to cart" stores the poster in the
+                visitor's localStorage cart, "Buy now" skips the cart and
+                goes straight to a single-item Stripe Checkout. The
+                stripeReady prop is computed server-side because
+                stripeConfigured() reads STRIPE_SECRET_KEY which isn't
+                exposed to the browser. */}
+            <BuyRow slug={poster.slug} stripeReady={stripeConfigured()} />
 
             <p className="fine-print">
               Digital download · High-resolution PNG · Link valid for 48 hours,

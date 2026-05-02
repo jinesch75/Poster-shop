@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
+import { CartClearOnMount } from '@/components/CartClearOnMount';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -79,6 +80,11 @@ export default async function CheckoutSuccessPage({
 
           {isPaid && (
             <>
+              {/* Order confirmed — drop the localStorage cart so a return
+                  visit doesn't show items the visitor has already paid
+                  for. Client-only island; the rest of this page stays
+                  server-rendered. */}
+              <CartClearOnMount />
               <h2 className="title">
                 Ready to download<span className="italic">.</span>
               </h2>

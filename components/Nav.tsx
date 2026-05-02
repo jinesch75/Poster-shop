@@ -5,6 +5,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { CartLink } from './CartLink';
 
 export function Nav() {
   const pathname = usePathname();
@@ -40,9 +41,10 @@ export function Nav() {
           Mondrian Gallery
         </Link>
       </div>
-      {/* Empty third column so the grid centres the links against
-          a balanced left/right gutter, regardless of wordmark width. */}
-      <div className="nav-spacer" aria-hidden="true" />
+      {/* Right column: cart link + count badge. CartLink renders an
+          inert spacer until it hydrates so the centred links don't
+          shift when the badge appears. */}
+      <CartLink />
     </nav>
   );
 }
