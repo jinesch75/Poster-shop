@@ -48,7 +48,7 @@ export function LivingRoomMockupRandom({ urls, alt }: Props) {
   }
 
   return (
-    <div className="product-detail__frame">
+    <div className="product-detail__frame product-detail__frame--mockup">
       <ProtectedImage
         src={urls[index]}
         alt={alt}

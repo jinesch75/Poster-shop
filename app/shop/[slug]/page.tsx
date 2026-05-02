@@ -82,8 +82,11 @@ export default async function ProductPage({
           <p>{poster.description}</p>
         </header>
 
-        {/* Three equal portrait columns: main poster · living-room mockup
-            · office triptych mockup. Stacks to a single column on mobile. */}
+        {/* Two-column outer layout: main poster on the left, a pair of
+            mockup columns on the right. The pair sits in its own grid
+            so we can keep a tighter inner gap while opening up the gap
+            between the main poster and the mockups. Stacks to a single
+            column on mobile. */}
         <div className="product-detail__images">
           <div className="product-detail__frame product-detail__frame--main">
             <ProtectedImage
@@ -96,33 +99,35 @@ export default async function ProductPage({
             />
           </div>
 
-          {/* Living-room triptych — randomised across cached variants
-              (each variant pairs the main poster with two siblings). */}
-          <LivingRoomMockupRandom
-            urls={livingMockupUrls}
-            alt={`${poster.title} in a living-room triptych`}
-          />
+          <div className="product-detail__mockups">
+            {/* Living-room triptych — randomised across cached variants
+                (each variant pairs the main poster with two siblings). */}
+            <LivingRoomMockupRandom
+              urls={livingMockupUrls}
+              alt={`${poster.title} in a living-room triptych`}
+            />
 
-          {/* Office single — just the main poster on its own. */}
-          {officeMockupUrl ? (
-            <div className="product-detail__frame">
-              <ProtectedImage
-                src={officeMockupUrl}
-                alt={`${poster.title} in an office`}
-                width={1200}
-                height={1600}
-                sizes="(max-width: 900px) 100vw, 33vw"
-              />
-            </div>
-          ) : (
-            <div
-              className="product-detail__frame product-detail__frame--placeholder"
-              aria-label="Office mockup — placeholder"
-            >
-              <span className="product-detail__ph-label">Office</span>
-              <span className="product-detail__ph-hint">Mockup coming soon</span>
-            </div>
-          )}
+            {/* Office single — just the main poster on its own. */}
+            {officeMockupUrl ? (
+              <div className="product-detail__frame product-detail__frame--mockup">
+                <ProtectedImage
+                  src={officeMockupUrl}
+                  alt={`${poster.title} in an office`}
+                  width={1200}
+                  height={1600}
+                  sizes="(max-width: 900px) 100vw, 33vw"
+                />
+              </div>
+            ) : (
+              <div
+                className="product-detail__frame product-detail__frame--placeholder"
+                aria-label="Office mockup — placeholder"
+              >
+                <span className="product-detail__ph-label">Office</span>
+                <span className="product-detail__ph-hint">Mockup coming soon</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Centered cart block — capped at ~600px so the price, buttons

@@ -177,16 +177,37 @@ export async function buildLivingRoomMockup(
   if (sidecar.frames.length < 3) {
     throw new Error('living-room.frames.json must have at least 3 frame slots');
   }
+  // The frames in the living-room photo have thinner borders than the
+  // single office frame, which makes the room mockup feel less weighty
+  // when posters are dropped in. Painting an extra ring of black around
+  // each poster doubles the visible border thickness without re-shooting
+  // the room.
+  const extraBorderPx = LIVING_ROOM_EXTRA_BORDER_PX;
   return compositeIntoFrames(plate, [
-    { posterBuffer: siblingLeft, frame: sidecar.frames[0] },
-    { posterBuffer: mainPoster, frame: sidecar.frames[1] },
-    { posterBuffer: siblingRight, frame: sidecar.frames[2] },
+    { posterBuffer: siblingLeft, frame: sidecar.frames[0], extraBorderPx },
+    { posterBuffer: mainPoster, frame: sidecar.frames[1], extraBorderPx },
+    { posterBuffer: siblingRight, frame: sidecar.frames[2], extraBorderPx },
   ]);
 }
 
+/** Width of the painted black ring added around each poster in the
+ *  living-room mockup. The photo's existing frame border is ~4px, so
+ *  4 here doubles the visible border to ~8px. */
+const LIVING_ROOM_EXTRA_BORDER_PX = 4;
+
+/** Hex-decoded RGB of the matte-black frame colour (--ink, #1a1a1a). */
+const FRAME_BLACK = { r: 26, g: 26, b: 26 } as const;
+
 async function compositeIntoFrames(
   plate: Buffer,
-  slots: Array<{ posterBuffer: Buffer; frame: FrameSlot }>,
+  slots: Array<{
+    posterBuffer: Buffer;
+    frame: FrameSlot;
+    /** If > 0, paint an N-pixel black ring around the poster inside the
+     *  frame slot. Used by the living-room mockup to bulk up its thin
+     *  in-photo frame borders; the office mockup leaves it at 0. */
+    extraBorderPx?: number;
+  }>,
 ): Promise<Buffer> {
   // Both scenes are square-on photos, so the inner rectangles are
   // axis-aligned. A cover-resize + rectangular composite reproduces what
@@ -195,15 +216,40 @@ async function compositeIntoFrames(
   // which crops a small sliver from the poster's top/bottom rather than
   // letterboxing or stretching.
   const composites = await Promise.all(
-    slots.map(async ({ posterBuffer, frame }) => {
+    slots.map(async ({ posterBuffer, frame, extraBorderPx = 0 }) => {
       const left = frame.innerTopLeft[0];
       const top = frame.innerTopLeft[1];
       const w = frame.innerTopRight[0] - frame.innerTopLeft[0];
       const h = frame.innerBottomLeft[1] - frame.innerTopLeft[1];
-      const fitted = await sharp(posterBuffer)
-        .resize(w, h, { fit: 'cover', position: 'center' })
+
+      const posterW = Math.max(1, w - 2 * extraBorderPx);
+      const posterH = Math.max(1, h - 2 * extraBorderPx);
+      const fittedPoster = await sharp(posterBuffer)
+        .resize(posterW, posterH, { fit: 'cover', position: 'center' })
         .toBuffer();
-      return { input: fitted, top, left };
+
+      if (extraBorderPx === 0) {
+        return { input: fittedPoster, top, left };
+      }
+
+      // Build a black canvas the size of the inner frame, paste the poster
+      // inset by extraBorderPx — the visible black ring sits between the
+      // resized poster and the photo's own frame edge, effectively
+      // thickening the frame border in the rendered output.
+      const bordered = await sharp({
+        create: {
+          width: w,
+          height: h,
+          channels: 3,
+          background: FRAME_BLACK,
+        },
+      })
+        .composite([
+          { input: fittedPoster, top: extraBorderPx, left: extraBorderPx },
+        ])
+        .png()
+        .toBuffer();
+      return { input: bordered, top, left };
     }),
   );
 

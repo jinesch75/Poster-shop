@@ -1398,11 +1398,20 @@ nav .right .cart:hover .cart-label {
   line-height: 1.55;
 }
 
+/* Two-column outer grid: main poster on the left, the pair of mockups
+   on the right. Bigger gap here lets the main poster breathe and read
+   as the hero; inside the mockup pair we use a tighter gap so the two
+   mockups still feel grouped. */
 .product-detail__images {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(16px, 2vw, 28px);
+  grid-template-columns: 1.15fr 2fr;
+  gap: clamp(40px, 5vw, 80px);
   margin-bottom: clamp(48px, 6vw, 80px);
+}
+.product-detail__mockups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 28px);
 }
 .product-detail__frame {
   position: relative;
@@ -1428,11 +1437,16 @@ nav .right .cart:hover .cart-label {
 /* The main poster column gets the same chunky black border + drop shadow
    used on gallery cards, so it reads as the framed hero of the trio. The
    mockup columns are room scenes with their own frames inside the
-   photo, so they don't get this treatment — a heavy outer border would
-   fight the frames in the picture. */
+   photo, so they only get a thin outer border — anything thicker would
+   fight the frames in the picture — but they share the strong drop
+   shadow so they don't feel like they're floating. */
 .product-detail__frame--main {
   border: 6px solid var(--ink);
   box-shadow: var(--shadow-rest);
+}
+.product-detail__frame--mockup {
+  border: 1px solid var(--rule-strong);
+  box-shadow: var(--shadow-hover);
 }
 .product-detail__ph-label {
   font-family: var(--display);
@@ -1487,6 +1501,12 @@ nav .right .cart:hover .cart-label {
 
 @media (max-width: 900px) {
   .product-detail__images {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  /* On mobile the two-column nested layout collapses to a single column,
+     so the inner mockup pair becomes a vertical stack matching the rest. */
+  .product-detail__mockups {
     grid-template-columns: 1fr;
     gap: 22px;
   }
