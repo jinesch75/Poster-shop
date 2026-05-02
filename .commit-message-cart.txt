@@ -68,6 +68,14 @@ What changed
   visit doesn't show paid-for items. Lets the success page stay a
   Server Component.
 
+* components/PosterCardCartButton.tsx (new) + components/PosterCard.tsx
+  refactor — small bag icon overlaid on the bottom-right of every
+  gallery thumb. Outlined ink-coloured bag when the poster isn't in
+  the cart, filled accent-teal bag with a paper-coloured checkmark
+  when it is. One tap toggles. PosterCard restructured so the cart
+  button is a sibling of the Link (not nested inside it), avoiding
+  invalid button-in-anchor markup.
+
 * app/checkout/success/page.tsx — renders <CartClearOnMount /> inside
   the isPaid block.
 

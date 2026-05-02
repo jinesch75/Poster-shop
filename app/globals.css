@@ -321,7 +321,14 @@ nav .right .cart .badge {
 .card {
   position: relative;
   display: flex; flex-direction: column;
+}
+/* The Link inside .card now wraps thumb + meta so the cart button
+   can sit beside it without nesting interactive elements. The link
+   inherits the original flex-column layout that used to live on .card. */
+.card__link {
+  display: flex; flex-direction: column;
   cursor: pointer;
+  color: inherit;
 }
 .card .thumb {
   aspect-ratio: 3/4;
@@ -1298,5 +1305,75 @@ nav .right .cart:hover .cart-label {
     grid-column: 2;
     justify-self: end;
     font-size: 16px;
+  }
+}
+
+/* --------- Gallery card: overlay add-to-cart button --------- */
+/* Pinned to the bottom-right of the thumb so it sits over the artwork
+   frame, not over the meta row below. Slightly larger hit target on
+   mobile (touch). The button is a sibling of .card__link, not nested
+   inside it — clicks are stopped from bubbling into the link. */
+.card__cart-btn {
+  position: absolute;
+  /* The thumb has a 6px ink border + drop shadow; offset so the button
+     hugs the inside corner cleanly without colliding with the frame. */
+  right: 10px;
+  /* Push above the meta row (thumb height + a bit). Using bottom from
+     the bottom of the thumb requires knowing the meta height; easier to
+     pin to the thumb's inner bottom by using the card itself as
+     reference and offsetting from the bottom of the meta. We use a
+     calc against the thumb's aspect ratio area is overkill — instead
+     position relative to the thumb's bottom edge via a wrapper offset.
+     In practice "bottom: <meta height + ~10px>" works visually because
+     the meta is a fixed-height affair. */
+  bottom: 50px;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: rgba(247, 244, 238, 0.95);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.18);
+  cursor: pointer;
+  z-index: 4;
+  /* Make sure the icon swap happens cleanly without inheriting the
+     thumb's hover transform. */
+  transition:
+    background 240ms var(--ease),
+    color 240ms var(--ease),
+    border-color 240ms var(--ease),
+    transform 240ms var(--ease);
+}
+.card__cart-btn:hover {
+  background: var(--paper);
+  border-color: var(--ink);
+}
+.card__cart-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* In-cart state: filled bag, accent fill, paper-coloured check inside.
+   The two stacked SVGs in the component swap visibility via these rules. */
+.card__cart-btn__icon { display: block; }
+.card__cart-btn__icon--in { display: none; }
+.card__cart-btn.is-in-cart { color: var(--accent); border-color: var(--accent); }
+.card__cart-btn.is-in-cart:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
+.card__cart-btn.is-in-cart .card__cart-btn__icon--out { display: none; }
+.card__cart-btn.is-in-cart .card__cart-btn__icon--in { display: block; }
+/* Brief pulse on add — communicates "yes that landed" without a toast. */
+@keyframes cart-add-pulse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.card__cart-btn.is-pulse { animation: cart-add-pulse 700ms var(--ease); }
+
+/* On mobile, ease the position out a little so it never crowds the
+   artwork's bottom edge on smaller thumbs. */
+@media (max-width: 520px) {
+  .card__cart-btn {
+    width: 34px; height: 34px;
+    right: 8px;
+    bottom: 46px;
   }
 }
