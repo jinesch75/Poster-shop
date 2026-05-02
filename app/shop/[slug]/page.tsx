@@ -1,16 +1,16 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProtectedImage } from '@/components/ProtectedImage';
 import { PosterCard } from '@/components/PosterCard';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
+import { BuyRow } from '@/components/BuyRow';
+import { OfficeMockupRandom } from '@/components/OfficeMockupRandom';
 import {
   getPosterBySlug,
   getPublishedPosterSlugs,
   getRelatedPosters,
 } from '@/lib/posters';
 import { stripeConfigured } from '@/lib/stripe';
-import { BuyRow } from '@/components/BuyRow';
 import { largestSharpPrintSize } from '@/lib/print-size';
 
 // Regenerate product pages when content changes; don't force dynamic
@@ -57,89 +57,80 @@ export default async function ProductPage({
     poster.masterHeightPx,
   );
 
+  // Mockup URLs aren't wired into PosterView yet — that lands once the
+  // compositor pipeline is updated to produce portrait variants and the
+  // Prisma schema gains the office-mockup-keys array. For now both slots
+  // fall back to grey-frame placeholders so we can review the new layout
+  // in isolation.
+  const livingMockupUrl: string | undefined = undefined;
+  const officeMockupUrls: string[] | undefined = undefined;
+
   return (
     <>
       <Nav />
 
-      <section className="section">
-        <div className="product">
-          <div className="main-preview">
+      <section className="section product-detail">
+        {/* Hero — fills the previously-empty band at the top of the page,
+            replaces the breadcrumb + headline pairing in the old layout. */}
+        <header className="product-detail__hero">
+          <h1>{poster.title}</h1>
+          <p>{poster.description}</p>
+        </header>
+
+        {/* Three equal portrait columns: main poster · living-room mockup
+            · office triptych mockup. Stacks to a single column on mobile. */}
+        <div className="product-detail__images">
+          <div className="product-detail__frame">
             <ProtectedImage
               src={poster.file}
               alt={poster.title}
               width={poster.masterWidthPx}
               height={poster.masterHeightPx}
               priority
-              sizes="(max-width: 900px) 100vw, 55vw"
+              sizes="(max-width: 900px) 100vw, 33vw"
             />
           </div>
 
-          <div className="info">
-            <div className="breadcrumb">
-              {/* Breadcrumb sends the visitor back to the gallery they came
-                  from — Mondrian-style poster → /mondrian, otherwise → /. */}
-              {poster.gallery === 'MONDRIAN' ? (
-                <Link
-                  href="/mondrian"
-                  style={{
-                    borderBottom: '1px solid var(--rule-strong)',
-                    paddingBottom: 1,
-                  }}
-                >
-                  Mondrian Gallery
-                </Link>
-              ) : (
-                <Link
-                  href="/"
-                  style={{
-                    borderBottom: '1px solid var(--rule-strong)',
-                    paddingBottom: 1,
-                  }}
-                >
-                  Main Gallery
-                </Link>
-              )}{' '}
-              /{' '}
-              <Link
-                href={`/city/${poster.citySlug}`}
-                style={{
-                  borderBottom: '1px solid var(--rule-strong)',
-                  paddingBottom: 1,
-                }}
-              >
-                {poster.city}
-              </Link>{' '}
-              / {poster.title}
+          {livingMockupUrl ? (
+            <div className="product-detail__frame">
+              <ProtectedImage
+                src={livingMockupUrl}
+                alt={`${poster.title} in a living room`}
+                width={1200}
+                height={1600}
+                sizes="(max-width: 900px) 100vw, 33vw"
+              />
             </div>
-            <h2>{poster.title}</h2>
-            <p className="byline">{poster.description}</p>
+          ) : (
+            <div
+              className="product-detail__frame product-detail__frame--placeholder"
+              aria-label="Living room mockup — placeholder"
+            >
+              <span className="product-detail__ph-label">Living room</span>
+              <span className="product-detail__ph-hint">Mockup coming soon</span>
+            </div>
+          )}
 
+          <OfficeMockupRandom
+            urls={officeMockupUrls}
+            alt={`${poster.title} hung in an office triptych`}
+          />
+        </div>
+
+        {/* Centered cart block — capped at ~600px so the price, buttons
+            and helper text feel like a deliberate focal point under the
+            gallery row rather than spanning the full content width. */}
+        <div className="product-detail__cart">
+          <div className="product-detail__cart-inner">
             {printSize && (
-              <p className="print-size-badge" aria-label={`Prints sharp at ${printSize}`}>
+              <p
+                className="print-size-badge"
+                aria-label={`Prints sharp at ${printSize}`}
+              >
                 <span className="print-size-badge__chip">{printSize}</span>
                 <span>Prints sharp at {printSize} (300 dpi)</span>
               </p>
             )}
-
-            <p className="wm-note">
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d="M10 2l7 4v5c0 4-3 7-7 8-4-1-7-4-7-8V6z" />
-                <path d="M7 10l2 2 4-4" />
-              </svg>
-              <span>
-                Your downloaded file is{' '}
-                <strong>full resolution, unmarked, and yours to print.</strong>
-              </span>
-            </p>
-
-            <div className="divider"></div>
 
             <div className="total-row">
               <div className="total-label">Price</div>
