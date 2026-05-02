@@ -11,6 +11,9 @@ export const PosterUploadSchema = z.object({
   priceEur: z.coerce.number().int().min(1, 'Price must be at least €1').max(500, 'Price must be €500 or less').default(5),
   publish: z.enum(['on', '']).optional().transform((v) => v === 'on'),
   landmarkType: z.string().trim().max(40, 'Landmark type must be 40 characters or fewer').optional(),
+  // Which gallery the poster belongs to. Defaults to MAIN — admins flip
+  // individual posters to MONDRIAN from the dropdown on the upload / edit form.
+  gallery: z.enum(['MAIN', 'MONDRIAN']).default('MAIN'),
 });
 
 export type PosterUploadInput = z.infer<typeof PosterUploadSchema>;

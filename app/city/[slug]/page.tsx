@@ -53,9 +53,11 @@ export default async function CityPage({
   const city = await getCityBySlug(slug);
   if (!city) notFound();
 
+  // City pages belong to the MAIN gallery — Mondrian-style posters live
+  // under /mondrian and are never mixed in here.
   const posters =
     city.status === 'AVAILABLE'
-      ? await getPublishedPosters({ citySlug: city.slug })
+      ? await getPublishedPosters({ citySlug: city.slug, gallery: 'MAIN' })
       : [];
 
   return (

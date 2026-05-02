@@ -54,6 +54,9 @@ export default async function AdminPostersList() {
                   <div className="admin-card__sub">
                     {p.city.name} · {p.number} · €{(p.priceDigitalCents / 100).toFixed(2)}
                   </div>
+                  <div className="admin-card__sub">
+                    {p.gallery === 'MONDRIAN' ? 'Mondrian style' : 'Main gallery'}
+                  </div>
                 </div>
               </Link>
             );

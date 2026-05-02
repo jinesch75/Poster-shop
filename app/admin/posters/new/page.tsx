@@ -34,6 +34,7 @@ async function createPoster(formData: FormData) {
     priceEur: formData.get('priceEur'),
     publish: formData.get('publish') ?? '',
     landmarkType: formData.get('landmarkType') || undefined,
+    gallery: formData.get('gallery') || undefined,
   });
 
   if (!parsed.success) {
@@ -52,7 +53,7 @@ async function createPoster(formData: FormData) {
     failWith('Only PNG or JPEG master files are accepted.');
   }
 
-  const { title, number, description, cityId, priceEur, publish, landmarkType } =
+  const { title, number, description, cityId, priceEur, publish, landmarkType, gallery } =
     parsed.data;
 
   const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
@@ -87,6 +88,7 @@ async function createPoster(formData: FormData) {
         description,
         cityId,
         landmarkType,
+        gallery,
         masterKey: derivatives.masterKey,
         previewKey: derivatives.previewKey,
         thumbnailKey: derivatives.thumbnailKey,
@@ -180,6 +182,14 @@ export default async function AdminNewPosterPage({
             <input name="priceEur" type="number" min={1} step={1} defaultValue={5} />
           </label>
         </div>
+
+        <label>
+          <span>Gallery</span>
+          <select name="gallery" defaultValue="MAIN">
+            <option value="MAIN">Main gallery</option>
+            <option value="MONDRIAN">Mondrian style</option>
+          </select>
+        </label>
 
         <label>
           <span>Landmark type (optional — for shop filters)</span>

@@ -22,6 +22,7 @@ export function Nav() {
       </Link>
       <div className="links">
         <Link href="/shop">Shop</Link>
+        <Link href="/mondrian">Mondrian</Link>
         <Link href="/about">About</Link>
       </div>
     </nav>

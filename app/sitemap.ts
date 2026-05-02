@@ -37,6 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: absoluteUrl('/'), lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: absoluteUrl('/shop'), lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: absoluteUrl('/mondrian'), lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: absoluteUrl('/about'), lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 

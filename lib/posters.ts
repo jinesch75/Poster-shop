@@ -14,6 +14,7 @@ import type {
   City as CityRow,
   Orientation,
   CityStatus,
+  Gallery,
 } from '@prisma/client';
 
 export type PosterView = {
@@ -31,6 +32,7 @@ export type PosterView = {
   masterWidthPx: number;
   masterHeightPx: number;
   landmarkType: string | null;
+  gallery: Gallery;
 };
 
 export type CityView = {
@@ -77,6 +79,7 @@ function toPosterView(
     masterWidthPx: p.masterWidthPx,
     masterHeightPx: p.masterHeightPx,
     landmarkType: p.landmarkType,
+    gallery: p.gallery,
   };
 }
 
@@ -101,6 +104,12 @@ export type PosterFilters = {
   citySlug?: string;
   orientation?: Orientation;
   landmarkType?: string;
+  /**
+   * Which gallery to fetch. Public listings should always pass this so
+   * MAIN and MONDRIAN posters never bleed into each other's pages.
+   * Omitted = no filter (admin / catalogue-wide use).
+   */
+  gallery?: Gallery;
 };
 
 export async function getPublishedPosters(
@@ -112,6 +121,7 @@ export async function getPublishedPosters(
       ...(filters.citySlug && { city: { slug: filters.citySlug } }),
       ...(filters.orientation && { orientation: filters.orientation }),
       ...(filters.landmarkType && { landmarkType: filters.landmarkType }),
+      ...(filters.gallery && { gallery: filters.gallery }),
     },
     include: { city: { select: { name: true, slug: true } } },
     orderBy: [{ city: { name: 'asc' } }, { number: 'asc' }],
@@ -131,10 +141,13 @@ export async function getRelatedPosters(
   poster: PosterView,
   limit = 3,
 ): Promise<PosterView[]> {
+  // Related posters stay within the same gallery — a Mondrian-style
+  // product page only suggests other Mondrian-style posters.
   const rows = await prisma.poster.findMany({
     where: {
       status: 'PUBLISHED',
       city: { slug: poster.citySlug },
+      gallery: poster.gallery,
       slug: { not: poster.slug },
     },
     include: { city: { select: { name: true, slug: true } } },
@@ -155,9 +168,20 @@ export async function getPublishedPosterSlugs(): Promise<string[]> {
 
 // ---------- Cities ----------
 
-export async function getCities(): Promise<CityView[]> {
+export async function getCities(gallery?: Gallery): Promise<CityView[]> {
   const rows = await prisma.city.findMany({
-    include: { _count: { select: { posters: { where: { status: 'PUBLISHED' } } } } },
+    include: {
+      _count: {
+        select: {
+          posters: {
+            where: {
+              status: 'PUBLISHED',
+              ...(gallery && { gallery }),
+            },
+          },
+        },
+      },
+    },
     orderBy: { number: 'asc' },
   });
   return rows.map(toCityView);

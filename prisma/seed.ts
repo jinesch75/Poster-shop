@@ -252,9 +252,11 @@ async function main() {
 
   console.log('Seeding London posters...');
   for (const p of londonPosters) {
-    // Same `update: {}` rule as cities — title/number/description are all
-    // admin-editable on /admin/posters/[id], so re-applying seed values on
-    // every deploy would clobber edits.
+    // Same `update: {}` rule as cities — title/number/description/gallery
+    // are all admin-editable on /admin/posters/[id], so re-applying seed
+    // values on every deploy would clobber edits. New rows fall into the
+    // MAIN gallery via the schema default; admins move individual posters
+    // to MONDRIAN from the dropdown on the edit page.
     await prisma.poster.upsert({
       where: { slug: p.slug },
       create: {

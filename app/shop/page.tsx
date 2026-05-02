@@ -26,7 +26,9 @@ type SearchParams = {
 const ALLOWED_ORIENTATIONS: Orientation[] = ['PORTRAIT', 'LANDSCAPE', 'SQUARE'];
 
 function parseFilters(sp: SearchParams): PosterFilters {
-  const filters: PosterFilters = {};
+  // /shop is the MAIN-gallery catalogue. Mondrian-style posters have their
+  // own page at /mondrian.
+  const filters: PosterFilters = { gallery: 'MAIN' };
   if (sp.city) filters.citySlug = sp.city;
   if (sp.orientation) {
     const up = sp.orientation.toUpperCase() as Orientation;
@@ -57,13 +59,14 @@ export default async function ShopPage({
 
   const [posters, cities] = await Promise.all([
     getPublishedPosters(filters),
-    getCities(),
+    // City chips reflect the MAIN catalogue — the shop never lists Mondrian.
+    getCities('MAIN'),
   ]);
 
   const cityChoices = cities.filter((c) => c.posterCount > 0);
 
-  // Distinct landmark types — computed from the full catalogue.
-  const allPosters = await getPublishedPosters();
+  // Distinct landmark types — computed from the full MAIN catalogue.
+  const allPosters = await getPublishedPosters({ gallery: 'MAIN' });
   const landmarkTypes = Array.from(
     new Set(allPosters.map((p) => p.landmarkType).filter((x): x is string => !!x)),
   ).sort();

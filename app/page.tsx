@@ -11,9 +11,11 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
+  // Homepage shows the MAIN gallery only. The Mondrian-style set lives at
+  // its own route (/mondrian) so the two collections stay visually distinct.
   const [cities, allPosters] = await Promise.all([
-    getCities(),
-    getPublishedPosters(),
+    getCities('MAIN'),
+    getPublishedPosters({ gallery: 'MAIN' }),
   ]);
 
   // Group posters by city slug so each city section renders only its own.

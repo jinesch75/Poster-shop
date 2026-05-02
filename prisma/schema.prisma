@@ -58,6 +58,11 @@ model Poster {
 
   status          PosterStatus  @default(DRAFT)
 
+  // Which gallery this poster belongs to. The site has two parallel
+  // collections: the original architectural set (MAIN) and the De Stijl /
+  // Mondrian-inspired set (MONDRIAN). Each poster lives in exactly one.
+  gallery         Gallery       @default(MAIN)
+
   city            City          @relation(fields: [cityId], references: [id])
   cityId          String
 
@@ -69,6 +74,7 @@ model Poster {
   updatedAt       DateTime      @updatedAt
 
   @@index([cityId, status])
+  @@index([gallery, status])
 }
 
 enum Orientation {
@@ -81,6 +87,14 @@ enum PosterStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+// Two parallel galleries on the public site. Each poster belongs to one.
+// Existing rows fall back to MAIN via the @default — admins move
+// individual posters to MONDRIAN from /admin/posters/[id].
+enum Gallery {
+  MAIN
+  MONDRIAN
 }
 
 // v2: physical print variants. Not used in v1 but kept so v2 is additive.

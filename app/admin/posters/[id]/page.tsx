@@ -13,6 +13,10 @@ function failBack(id: string, message: string): never {
 
 async function updatePoster(id: string, formData: FormData) {
   'use server';
+  // Coerce gallery to a known enum value; anything else falls back to MAIN.
+  const galleryRaw = String(formData.get('gallery') ?? 'MAIN');
+  const gallery = galleryRaw === 'MONDRIAN' ? 'MONDRIAN' : 'MAIN';
+
   await prisma.poster.update({
     where: { id },
     data: {
@@ -22,6 +26,7 @@ async function updatePoster(id: string, formData: FormData) {
       cityId: String(formData.get('cityId') ?? ''),
       priceDigitalCents: Math.round(Number(formData.get('priceEur') ?? 5) * 100),
       status: formData.get('publish') === 'on' ? 'PUBLISHED' : 'DRAFT',
+      gallery,
     },
   });
   redirect(`/admin/posters/${id}?ok=saved`);
@@ -271,6 +276,13 @@ export default async function AdminPosterEdit({
                 />
               </label>
             </div>
+            <label>
+              <span>Gallery</span>
+              <select name="gallery" defaultValue={poster.gallery}>
+                <option value="MAIN">Main gallery</option>
+                <option value="MONDRIAN">Mondrian style</option>
+              </select>
+            </label>
             <label className="admin-form__checkbox">
               <input
                 name="publish"
