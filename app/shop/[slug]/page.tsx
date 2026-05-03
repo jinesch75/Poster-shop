@@ -75,11 +75,12 @@ export default async function ProductPage({
       <Nav />
 
       <section className="section product-detail">
-        {/* Hero — fills the previously-empty band at the top of the page,
-            replaces the breadcrumb + headline pairing in the old layout. */}
+        {/* Hero — just the product title. The description text was dropped
+            2026-05-02 to keep the page tighter; the description still
+            survives as the page's <meta name="description"> via
+            generateMetadata above. */}
         <header className="product-detail__hero">
-          <h1>{poster.title}</h1>
-          <p>{poster.description}</p>
+          <h2>{poster.title}</h2>
         </header>
 
         {/* Two-column outer layout: main poster on the left, a pair of
