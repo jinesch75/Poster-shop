@@ -1,15 +1,18 @@
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+import { getVisitorsLastNDays } from '@/lib/analytics';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const [posterCount, publishedCount, cityCount, orderCount, subscriberCount, recentOrders] =
+  const [posterCount, publishedCount, cityCount, orderCount, subscriberCount, visitors7d, recentOrders] =
     await Promise.all([
       prisma.poster.count(),
       prisma.poster.count({ where: { status: 'PUBLISHED' } }),
       prisma.city.count(),
       prisma.order.count({ where: { status: 'PAID' } }),
       prisma.subscriber.count(),
+      getVisitorsLastNDays(7),
       prisma.order.findMany({
         where: { status: { in: ['PAID', 'FULFILLED'] } },
         orderBy: { createdAt: 'desc' },
@@ -38,6 +41,15 @@ export default async function AdminDashboard() {
         <Stat label="Paid orders" value={String(orderCount)} note="All-time" />
         <Stat label="Revenue" value={`€${revenueEur.toFixed(2)}`} note="All-time" />
         <Stat label="Newsletter" value={String(subscriberCount)} note="Subscribers" />
+        <Stat
+          label="Visitors"
+          value={String(visitors7d)}
+          note={
+            <Link href="/admin/analytics" className="admin-stat__link">
+              Last 7 days →
+            </Link>
+          }
+        />
       </div>
 
       <section className="admin-dash__section">
@@ -99,7 +111,15 @@ export default async function AdminDashboard() {
   );
 }
 
-function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
+function Stat({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note?: React.ReactNode;
+}) {
   return (
     <div className="admin-stat">
       <div className="admin-stat__label">{label}</div>

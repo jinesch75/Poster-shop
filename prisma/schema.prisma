@@ -215,6 +215,36 @@ model Subscriber {
   createdAt    DateTime @default(now())
 }
 
+// ---------- Analytics ----------
+//
+// Privacy-first page-view tracking. NO cookies, NO stored IPs, NO
+// personal identifiers. Recorded server-side from middleware so ad
+// blockers and "do not track" don't break it.
+//
+// `sessionHash` is a daily-rotating salted hash of (ip + user-agent)
+// — it lets us count unique visitors per day without ever persisting
+// the IP. The salt rotates at midnight UTC so the same person on the
+// same device gets a fresh hash each day; we never re-identify them.
+// This is the same pattern Plausible / Fathom use to stay GDPR-safe
+// without a cookie banner.
+model PageView {
+  id          String   @id @default(cuid())
+  path        String   // e.g. "/", "/city/london", "/shop/big-ben"
+  referrer    String?  // host only, e.g. "google.com"
+  country     String?  // ISO-2, e.g. "FR"
+  region      String?  // optional sub-region label
+  city        String?  // optional city label
+  deviceType  String?  // "mobile" | "tablet" | "desktop" | "bot"
+  browser     String?  // "chrome" | "safari" | "firefox" | ...
+  os          String?  // "iOS" | "macOS" | "Windows" | "Android" | ...
+  sessionHash String   // daily-rotating anonymized identifier
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@index([sessionHash, createdAt])
+}
+
 // (QrScan model removed 2026-05-02 — the QR badge was removed from
 // the preview pipeline and the /q/<slug> redirect endpoint along with
 // it. The next `prisma db push` on Railway drops the underlying table.)
