@@ -26,6 +26,24 @@ import { putBuffer, readBuffer } from './storage';
 import { prisma } from './prisma';
 import { getSiblingPairsForPoster } from './mockup-siblings';
 
+// ---------- sharp memory tuning ----------
+//
+// Runs once, on module load — this is the only module that touches sharp at
+// runtime, so configuring here also covers the seed and any tsx scripts
+// (an instrumentation.ts hook would not).
+//
+// libvips keeps decoded images in an operation cache by default. That's a
+// win for a server resizing the same small assets repeatedly; it's a loss
+// for us, because our inputs are 20–40 MB one-shot masters that are resized
+// once and never seen again. The cache just pins tens of MB of native
+// memory per poster that the process never gives back.
+//
+// concurrency(1) caps libvips' worker threads. It defaults to the CPU count,
+// and each thread carries its own tile buffers — pointless when the metrics
+// show CPU sitting at ~0% and the work is sequential anyway.
+sharp.cache(false);
+sharp.concurrency(1);
+
 // ---------- Asset dimensions ----------
 
 /** Public preview: large enough to look great on a 4K screen, too small to print well. */
