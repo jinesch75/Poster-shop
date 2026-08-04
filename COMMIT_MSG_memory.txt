@@ -1,0 +1,27 @@
+perf: cut idle memory by disabling sharp's libvips cache
+
+Railway metrics showed the service holding 1.54 GB RSS constantly while
+serving ~16 requests/hour at ~0% CPU. At $10/GB/month that is ~$15/month
+in RAM, which was the overwhelming majority of the bill — the 1.26 GB
+image volume costs about $0.19/month by comparison.
+
+Two causes, both memory held rather than memory needed:
+
+  - libvips keeps decoded images in an operation cache (default 50 MB /
+    100 operations). That default assumes a server resizing the same
+    small assets repeatedly. Ours are 20-40 MB one-shot masters, resized
+    once on upload and never touched again, so the cache only pinned
+    native memory the process never returned.
+
+  - sharp.concurrency() defaults to the CPU count, and each libvips
+    worker carries its own tile buffers. Pointless here: CPU sits at ~0%
+    and the pipeline is sequential.
+
+Configured at module load in lib/watermark.ts rather than via an
+instrumentation.ts hook, because watermark.ts is the only runtime
+consumer of sharp and this way the seed and any tsx scripts get the
+same settings.
+
+Paired with NODE_OPTIONS=--max-old-space-size=512 set as a Railway
+service variable, which caps the V8 heap. Node otherwise sizes its heap
+from the container's 8 GB ceiling and lets garbage accumulate.
