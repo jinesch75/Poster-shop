@@ -42,10 +42,20 @@ regenerate the rest.
 
 Compute was stopped by removing deployments; volumes and Postgres data stayed.
 
-1. Railway dashboard → Poster-shop → Deployments → redeploy the latest, or
-   push any commit (GitHub autodeploy is connected).
-2. Redeploy Postgres the same way if its deployment was also removed.
+1. **Redeploy Postgres FIRST and wait for it to come Online.**
+2. Then redeploy Poster-shop — dashboard → Deployments → redeploy, or push a
+   commit if autodeploy is still connected.
 3. Confirm: `railway metrics`, then load gridlinecities.com.
+
+**Order matters.** The `start` command begins with
+`prisma db push --skip-generate --accept-data-loss`, so the app cannot boot
+without a reachable database — it exits and the deployment goes to Failed.
+This is exactly what happened during parking on 2026-08-04: a GitHub autodeploy
+landed after Postgres had been taken down, and failed on that first command.
+The failure is benign and means nothing is wrong with the code.
+
+Note also that autodeploy was disabled at park time. If a push mysteriously
+doesn't deploy, that's why — redeploy from the dashboard instead.
 
 DNS, env vars, Stripe webhook and the volume are all untouched. Minutes, not
 hours.
