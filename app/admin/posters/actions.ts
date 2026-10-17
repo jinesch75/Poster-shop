@@ -125,7 +125,7 @@ export async function runQuickUpload(formData: FormData): Promise<void> {
     try {
       const buffer = Buffer.from(await file.arrayBuffer());
       const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
-      const derivatives = await processMaster(buffer, ext);
+      const derivatives = await processMaster(buffer, posterSlug, ext);
       const number = await nextPosterNumber();
       const created = await prisma.poster.create({
         data: {

@@ -4,11 +4,23 @@
 // (The living-room triptych mockup needs sibling posters and is built by
 // a separate function — see refreshLivingRoomMockups in step 4.)
 //
-// Strategy: resolution is the protection. The clean 4000px+ master stays
-// private, served only via signed download URLs after purchase. The public
-// 1200px preview is gorgeous on screen but useless for printing at any
-// meaningful size — at 300dpi it tops out around postcard size. The
+// Strategy: resolution is the main protection. The clean 4000px+ master
+// stays private, served only via signed download URLs after purchase. The
+// public 1200px preview is gorgeous on screen but useless for printing at
+// any meaningful size — at 300dpi it tops out around postcard size. The
 // thumbnail is even smaller (500px) for grid display.
+//
+// On top of that, the public images are visibly marked (restored
+// 2026-10-17 after being off since 2026-05-02):
+//   - preview:   faint diagonal "GRIDLINE · CITIES" band, "Gridline Cities"
+//                in the bottom-left corner, and a small QR badge in the
+//                bottom-right that links back to the poster (/q/<slug>)
+//   - thumbnail: diagonal band + corner name (a QR would be unreadable)
+// Mockups are composited from the marked preview, so they carry it too.
+// Masters are never marked.
+//
+// Text is drawn from vector outlines in ./watermark-glyphs.ts rather than
+// SVG <text>, so it doesn't depend on fonts being installed on the server.
 //
 // Mockup composition reads two scene plates from public/mockups/:
 //   - office.jpg          — single empty portrait frame above a desk
@@ -25,6 +37,8 @@ import { promises as fs } from 'fs';
 import { putBuffer, readBuffer } from './storage';
 import { prisma } from './prisma';
 import { getSiblingPairsForPoster } from './mockup-siblings';
+import { qrPngBuffer, qrTargetUrl } from './qr';
+import { CORNER_TEXT, DIAGONAL_TEXT, GLYPH_UNITS } from './watermark-glyphs';
 
 // ---------- sharp memory tuning ----------
 //
@@ -52,6 +66,20 @@ const PREVIEW_TARGET_WIDTH = 1200;
 /** Public thumbnail: grid display only. */
 const THUMB_TARGET_WIDTH = 500;
 
+// ---------- Watermark tuning ----------
+
+/** QR side length as a fraction of preview width (~100px on a 1200px preview). */
+const QR_FRACTION_OF_WIDTH = 0.085;
+
+/** White pill padding around the QR, in pixels. */
+const QR_PILL_PADDING = 8;
+
+/** Gap between the image edge and the QR pill, as a fraction of width. */
+const QR_EDGE_INSET_FRACTION = 0.022;
+
+/** Opacity of the diagonal wordmark band. */
+const DIAGONAL_OPACITY = 0.12;
+
 // ---------- Public types ----------
 
 export type PosterDerivatives = {
@@ -70,14 +98,16 @@ export type PosterDerivatives = {
  * + the office mockup. Returns storage keys for all of them.
  *
  * @param masterBuffer raw bytes of the uploaded master file (PNG/JPG)
+ * @param slug         poster slug — baked into the preview's QR as /q/<slug>
  * @param ext          original master extension (informs the master file's stored ext)
  */
 export async function processMaster(
   masterBuffer: Buffer,
+  slug: string,
   ext: 'png' | 'jpg' = 'png',
 ): Promise<PosterDerivatives> {
   const masterKey = await putBuffer('masters', masterBuffer, ext);
-  return runDerivatives(masterBuffer, masterKey);
+  return runDerivatives(masterBuffer, masterKey, slug);
 }
 
 /**
@@ -88,9 +118,10 @@ export async function processMaster(
  */
 export async function reprocessMaster(
   masterKey: string,
+  slug: string,
 ): Promise<PosterDerivatives> {
   const buffer = await readBuffer(masterKey);
-  return runDerivatives(buffer, masterKey);
+  return runDerivatives(buffer, masterKey, slug);
 }
 
 // ---------- Internal: derivative generation ----------
@@ -98,6 +129,7 @@ export async function reprocessMaster(
 async function runDerivatives(
   masterBuffer: Buffer,
   masterKey: string,
+  slug: string,
 ): Promise<PosterDerivatives> {
   const meta = await sharp(masterBuffer).metadata();
   const width = meta.width ?? 1856;
@@ -106,16 +138,37 @@ async function runDerivatives(
   // ---- Preview (1200px) ---------------------------------------------
   // Cap target width at the master's actual width so we never upscale.
   const previewWidth = Math.min(PREVIEW_TARGET_WIDTH, width);
+  const previewHeight = Math.round((height / width) * previewWidth);
+
+  const qrSize = Math.round(previewWidth * QR_FRACTION_OF_WIDTH);
+  const qrBadge = await buildQrBadge(qrTargetUrl(slug), qrSize);
+  const badgeSize = qrSize + QR_PILL_PADDING * 2;
+  const inset = Math.round(previewWidth * QR_EDGE_INSET_FRACTION);
+
   const previewBuffer = await sharp(masterBuffer)
     .resize({ width: previewWidth, withoutEnlargement: true })
+    .composite([
+      { input: Buffer.from(diagonalWordmarkSvg(previewWidth, previewHeight)), top: 0, left: 0 },
+      { input: Buffer.from(cornerWordmarkSvg(previewWidth, previewHeight)), top: 0, left: 0 },
+      {
+        input: qrBadge,
+        top: previewHeight - badgeSize - inset,
+        left: previewWidth - badgeSize - inset,
+      },
+    ])
     .jpeg({ quality: 82, mozjpeg: true })
     .toBuffer();
   const previewKey = await putBuffer('previews', previewBuffer, 'jpg');
 
   // ---- Thumbnail (500px) --------------------------------------------
   const thumbWidth = Math.min(THUMB_TARGET_WIDTH, width);
+  const thumbHeight = Math.round((height / width) * thumbWidth);
   const thumbBuffer = await sharp(masterBuffer)
     .resize({ width: thumbWidth, withoutEnlargement: true })
+    .composite([
+      { input: Buffer.from(diagonalWordmarkSvg(thumbWidth, thumbHeight)), top: 0, left: 0 },
+      { input: Buffer.from(cornerWordmarkSvg(thumbWidth, thumbHeight)), top: 0, left: 0 },
+    ])
     .jpeg({ quality: 82, mozjpeg: true })
     .toBuffer();
   const thumbnailKey = await putBuffer('thumbnails', thumbBuffer, 'jpg');
@@ -135,6 +188,64 @@ async function runDerivatives(
     widthPx: width,
     heightPx: height,
   };
+}
+
+// ---------- Watermark overlays ----------
+
+/**
+ * Repeating diagonal band of "GRIDLINE · CITIES" across the whole image,
+ * rotated -28°, at low opacity. Sized relative to the image so it looks the
+ * same on a 500px thumbnail and a 1200px preview.
+ */
+function diagonalWordmarkSvg(width: number, height: number): string {
+  const fontSize = Math.min(width, height) * 0.045;
+  const scale = fontSize / GLYPH_UNITS;
+  const textWidth = DIAGONAL_TEXT.width * scale;
+  const gap = fontSize * 5.5;
+  const count = Math.ceil((width + height) / gap) + 2;
+  const x = width / 2 - textWidth / 2;
+  const rows: string[] = [];
+  for (let i = -count; i < count; i += 1) {
+    const y = i * gap + height / 2;
+    rows.push(
+      `<use href="#gc" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${scale.toFixed(4)})"/>`,
+    );
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs><path id="gc" d="${DIAGONAL_TEXT.d}"/></defs>
+  <g fill="#1a1a1a" fill-opacity="${DIAGONAL_OPACITY}" transform="rotate(-28 ${width / 2} ${height / 2})">
+    ${rows.join('\n    ')}
+  </g>
+</svg>`;
+}
+
+/**
+ * "Gridline Cities" in the bottom-left corner — same two-weight wordmark as
+ * the site header. Bottom-left because the QR badge owns bottom-right.
+ */
+function cornerWordmarkSvg(width: number, height: number): string {
+  const fontSize = Math.min(width, height) * 0.022;
+  const scale = fontSize / GLYPH_UNITS;
+  const x = width * 0.035;
+  const y = height - height * 0.03;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <g fill="#1a1a1a" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${scale.toFixed(4)})">
+    <path d="${CORNER_TEXT.boldD}" fill-opacity="0.55"/>
+    <path d="${CORNER_TEXT.lightD}" fill-opacity="0.35"/>
+  </g>
+</svg>`;
+}
+
+/** QR code on a small white square, ready to composite. */
+async function buildQrBadge(url: string, qrSize: number): Promise<Buffer> {
+  const qr = await qrPngBuffer(url, qrSize);
+  const badge = qrSize + QR_PILL_PADDING * 2;
+  return sharp({
+    create: { width: badge, height: badge, channels: 4, background: '#ffffff' },
+  })
+    .composite([{ input: qr, top: QR_PILL_PADDING, left: QR_PILL_PADDING }])
+    .png()
+    .toBuffer();
 }
 
 // ---------- Mockup composition ----------

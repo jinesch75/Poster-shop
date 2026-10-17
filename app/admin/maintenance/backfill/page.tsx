@@ -87,7 +87,7 @@ async function runBackfill(): Promise<void> {
       // 3. Run the new pipeline against the volume-backed master.
       //    reprocessMaster reads from storage by key, so we go via the
       //    new key we just wrote.
-      const derivatives = await reprocessMaster(newMasterKey);
+      const derivatives = await reprocessMaster(newMasterKey, poster.slug);
 
       // 4. Update the DB row to point at the volume-backed everything.
       await prisma.poster.update({
@@ -144,7 +144,7 @@ async function runRegenerate(): Promise<void> {
     }
 
     try {
-      const derivatives = await reprocessMaster(poster.masterKey);
+      const derivatives = await reprocessMaster(poster.masterKey, poster.slug);
 
       await prisma.poster.update({
         where: { id: poster.id },
