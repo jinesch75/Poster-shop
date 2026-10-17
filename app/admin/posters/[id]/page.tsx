@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { revalidatePosterPages } from '@/lib/revalidate';
 import { publicUrl } from '@/lib/storage';
 import {
   processMaster,
@@ -33,6 +34,7 @@ async function updatePoster(id: string, formData: FormData) {
       gallery,
     },
   });
+  revalidatePosterPages();
   redirect(`/admin/posters/${id}?ok=saved`);
 }
 
@@ -59,8 +61,10 @@ async function regeneratePreviews(id: string) {
     await refreshLivingRoomMockups(id);
   } catch (err) {
     console.error('living-room mockup refresh failed', err);
+    revalidatePosterPages();
     redirect(`/admin/posters/${id}?error=living-room-refresh-failed`);
   }
+  revalidatePosterPages();
   redirect(`/admin/posters/${id}?ok=regenerated`);
 }
 
@@ -113,14 +117,17 @@ async function replaceMaster(id: string, formData: FormData) {
     await refreshLivingRoomMockups(id);
   } catch (err) {
     console.error('living-room mockup refresh failed', err);
+    revalidatePosterPages();
     redirect(`/admin/posters/${id}?error=living-room-refresh-failed`);
   }
+  revalidatePosterPages();
   redirect(`/admin/posters/${id}?ok=master-replaced`);
 }
 
 async function deletePoster(id: string) {
   'use server';
   await prisma.poster.delete({ where: { id } });
+  revalidatePosterPages();
   redirect('/admin/posters');
 }
 

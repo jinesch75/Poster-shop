@@ -11,6 +11,7 @@
 
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { revalidatePosterPages } from '@/lib/revalidate';
 import { processMaster, refreshLivingRoomMockups } from '@/lib/watermark';
 
 const DEFAULT_DESCRIPTION_BY_CITY: Record<string, string> = {
@@ -175,6 +176,7 @@ export async function runQuickUpload(formData: FormData): Promise<void> {
         `${r.posterSlug}|${r.status}${r.detail ? '|' + r.detail.replace(/[|,]/g, ' ') : ''}`,
     )
     .join(',');
+  revalidatePosterPages();
   redirect(`/admin/posters?report=${encodeURIComponent(summary)}`);
 }
 

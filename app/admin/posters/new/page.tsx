@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { revalidatePosterPages } from '@/lib/revalidate';
 import { processMaster, refreshLivingRoomMockups } from '@/lib/watermark';
 import { PosterUploadSchema, firstError } from '@/lib/validation';
 
@@ -126,6 +127,7 @@ async function createPoster(formData: FormData) {
     console.error('living-room mockup refresh failed', err);
   }
 
+  revalidatePosterPages();
   redirect('/admin/posters');
 }
 

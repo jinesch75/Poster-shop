@@ -22,6 +22,7 @@ import { cookies } from 'next/headers';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { prisma } from '@/lib/prisma';
+import { revalidatePosterPages } from '@/lib/revalidate';
 import { putBuffer } from '@/lib/storage';
 import { reprocessMaster, refreshLivingRoomMockups } from '@/lib/watermark';
 
@@ -116,6 +117,7 @@ async function runBackfill(): Promise<void> {
   }
 
   await persistReport(results);
+  revalidatePosterPages();
   redirect('/admin/maintenance/backfill');
 }
 
@@ -172,6 +174,7 @@ async function runRegenerate(): Promise<void> {
   }
 
   await persistReport(results);
+  revalidatePosterPages();
   redirect('/admin/maintenance/backfill');
 }
 
