@@ -46,7 +46,6 @@ const cities: CitySeed[] = [
 type PosterSeed = {
   slug: string;
   title: string;
-  number: string;
   description: string;
   file: string; // public path during development; real admin uploads replace this
 };
@@ -55,7 +54,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'westminster-primary',
     title: 'Westminster Primary',
-    number: 'N°01',
     file: '/posters/big-ben.png',
     description:
       "The Elizabeth Tower rendered in draughtsman's line and overlaid with a De Stijl composition of primary blocks.",
@@ -63,7 +61,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'south-bank',
     title: 'South Bank',
-    number: 'N°02',
     file: '/posters/london-eye.png',
     description:
       'The London Eye turning against the river, pinned to a composition of yellow, red, and blue planes.',
@@ -71,7 +68,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'tower-bridge',
     title: 'Tower Bridge',
-    number: 'N°03',
     file: '/posters/tower-bridge.png',
     description:
       'Twin Gothic towers against the Thames — architectural line drawings and primary-color blocks.',
@@ -79,7 +75,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'st-pauls',
     title: "St Paul's",
-    number: 'N°04',
     file: '/posters/st-pauls.png',
     description:
       "Wren's dome holding the centre of the composition, anchored by blocks of colour.",
@@ -87,7 +82,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'the-shard',
     title: 'The Shard',
-    number: 'N°05',
     file: '/posters/the-shard.png',
     description:
       "Renzo Piano's glass tower rendered as line and refracted through the Mondrian palette.",
@@ -95,7 +89,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'kiosk-k2',
     title: 'Kiosk K2',
-    number: 'N°06',
     file: '/posters/telephone-box.png',
     description:
       'The iconic red telephone box, framed against a quiet streetscape of Westminster.',
@@ -103,7 +96,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'westminster-abbey',
     title: 'Westminster Abbey',
-    number: 'N°07',
     file: '/posters/westminster-abbey.png',
     description:
       'Gothic architecture abstracted into line drawings and block — eight centuries of stone in four colours.',
@@ -111,7 +103,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'the-riverline',
     title: 'The Riverline',
-    number: 'N°08',
     file: '/posters/big-ben-london-eye.png',
     description:
       'Big Ben and the London Eye held together by the Thames — a panoramic composition in primaries.',
@@ -119,7 +110,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'westminster-primary-ii',
     title: 'Westminster Primary II',
-    number: 'N°14',
     file: '/posters/westminster-primary-ii.png',
     description:
       'The Elizabeth Tower from the street — red buses crossing beneath, the city in primary colour.',
@@ -127,7 +117,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'south-bank-ii',
     title: 'South Bank II',
-    number: 'N°15',
     file: '/posters/south-bank-ii.png',
     description:
       'The London Eye in vertical close — the wheel filling the frame against the river quarter.',
@@ -135,7 +124,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'tower-bridge-ii',
     title: 'Tower Bridge II',
-    number: 'N°16',
     file: '/posters/tower-bridge-ii.png',
     description:
       "The bridge's northern tower in close detail — Victorian Gothic in line drawings, red holding the upper deck.",
@@ -143,7 +131,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'st-pauls-ii',
     title: "St Paul's II",
-    number: 'N°17',
     file: '/posters/st-pauls-ii.png',
     description:
       "Wren's dome above Ludgate — the avenue funnelling the eye toward the cross.",
@@ -151,7 +138,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'the-shard-ii',
     title: 'The Shard II',
-    number: 'N°18',
     file: '/posters/the-shard-ii.png',
     description:
       "Renzo Piano's spire from below — glass and steel rising through the city.",
@@ -159,7 +145,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'westminster-abbey-ii',
     title: 'Westminster Abbey II',
-    number: 'N°19',
     file: '/posters/westminster-abbey-ii.png',
     description:
       'The west facade and rose window — gothic stone caught between primary verticals.',
@@ -167,7 +152,6 @@ const londonPosters: PosterSeed[] = [
   {
     slug: 'battersea',
     title: 'Battersea',
-    number: 'N°20',
     file: '/posters/battersea.png',
     description:
       'The four white chimneys of the power station above the Thames — industrial monument abstracted into line drawings and primaries.',
@@ -178,7 +162,6 @@ const newYorkPosters: PosterSeed[] = [
   {
     slug: 'brooklyn-bridge',
     title: 'Brooklyn Bridge',
-    number: 'N°09',
     file: '/posters/brooklyn-bridge.png',
     description:
       'The granite towers and gothic arches of the East River crossing — engineering as cathedral, drawn in line and pinned to a band of red.',
@@ -186,7 +169,6 @@ const newYorkPosters: PosterSeed[] = [
   {
     slug: 'one-world',
     title: 'One World',
-    number: 'N°10',
     file: '/posters/one-world.png',
     description:
       "Lower Manhattan's faceted glass tower, drawn against a foundation of red and yellow planes.",
@@ -194,7 +176,6 @@ const newYorkPosters: PosterSeed[] = [
   {
     slug: 'flatiron',
     title: 'Flatiron',
-    number: 'N°11',
     file: '/posters/flatiron.png',
     description:
       "Daniel Burnham's wedge of 1902 at the corner of Fifth and Broadway — Beaux-Arts geometry held by yellow.",
@@ -202,7 +183,6 @@ const newYorkPosters: PosterSeed[] = [
   {
     slug: 'empire-state',
     title: 'Empire State',
-    number: 'N°12',
     file: '/posters/empire-state.png',
     description:
       'The 1931 art deco icon rendered as line, the streetscape descending into red and blue planes.',
@@ -210,7 +190,6 @@ const newYorkPosters: PosterSeed[] = [
   {
     slug: 'chrysler',
     title: 'Chrysler',
-    number: 'N°13',
     file: '/posters/chrysler.png',
     description:
       "Van Alen's stainless crown of 1930, drawn at street level with the avenue stretching beneath in primary colour.",
@@ -218,7 +197,6 @@ const newYorkPosters: PosterSeed[] = [
   {
     slug: 'statue-of-liberty',
     title: 'Statue of Liberty',
-    number: 'N°21',
     file: '/posters/statue-of-liberty.png',
     description:
       'Bartholdi’s copper figure on Liberty Island — torch raised against the harbour, drawn in line and held by primary blocks.',
@@ -273,7 +251,6 @@ async function main() {
       create: {
         slug: p.slug,
         title: p.title,
-        number: p.number,
         description: p.description,
         // Point all three keys at the public file during development.
         // The admin upload flow replaces these with volume-backed keys.
@@ -299,7 +276,6 @@ async function main() {
       create: {
         slug: p.slug,
         title: p.title,
-        number: p.number,
         description: p.description,
         masterKey: `public:${p.file}`,
         previewKey: `public:${p.file}`,

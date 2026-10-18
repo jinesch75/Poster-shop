@@ -9,7 +9,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { publicUrl } from '@/lib/storage';
-import { byPosterNumber } from '@/lib/poster-order';
+import { byTitle } from '@/lib/poster-order';
 import type {
   Poster as PosterRow,
   City as CityRow,
@@ -22,7 +22,6 @@ export type PosterView = {
   id: string;
   slug: string;
   title: string;
-  number: string;
   description: string;
   city: string;
   citySlug: string;
@@ -87,7 +86,6 @@ function toPosterView(
     id: p.id,
     slug: p.slug,
     title: p.title,
-    number: p.number,
     description: p.description,
     city: p.city.name,
     citySlug: p.city.slug,
@@ -144,10 +142,9 @@ export async function getPublishedPosters(
       ...(filters.gallery && { gallery: filters.gallery }),
     },
     include: { city: { select: { name: true, slug: true } } },
-    orderBy: [{ city: { name: 'asc' } }, { number: 'asc' }],
   });
-  // Numbers are text; re-sort numerically so "N°9" comes before "N°10".
-  rows.sort((a, b) => a.city.name.localeCompare(b.city.name) || byPosterNumber(a, b));
+  // Within each city: A→Z by title (see lib/poster-order.ts).
+  rows.sort((a, b) => a.city.name.localeCompare(b.city.name) || byTitle(a, b));
   return rows.map(toPosterView);
 }
 
@@ -186,7 +183,7 @@ export async function getRelatedPosters(
     },
     include: { city: { select: { name: true, slug: true } } },
   });
-  return rows.sort(byPosterNumber).slice(0, limit).map(toPosterView);
+  return rows.sort(byTitle).slice(0, limit).map(toPosterView);
 }
 
 /** Used by generateStaticParams on /shop/[slug] */

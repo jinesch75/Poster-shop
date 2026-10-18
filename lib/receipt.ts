@@ -34,7 +34,6 @@ export async function sendReceiptEmail(args: SendReceiptArgs) {
           poster: {
             select: {
               title: true,
-              number: true,
               city: { select: { name: true } },
             },
           },
@@ -53,7 +52,6 @@ export async function sendReceiptEmail(args: SendReceiptArgs) {
 
   const items = order.items.map((item) => ({
     title: item.poster?.title ?? 'Gridline Cities poster',
-    number: item.poster?.number ?? '',
     cityName: item.poster?.city?.name ?? null,
     downloadUrl: item.downloadToken
       ? absoluteUrl(`/api/download/${item.downloadToken}`)

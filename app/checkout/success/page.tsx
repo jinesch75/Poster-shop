@@ -34,7 +34,6 @@ export default async function CheckoutSuccessPage({
             select: {
               title: true,
               slug: true,
-              number: true,
               city: { select: { name: true } },
             },
           },
@@ -104,8 +103,7 @@ export default async function CheckoutSuccessPage({
                         {item.poster?.title ?? 'Poster'}
                       </div>
                       <div className="download-row__meta">
-                        {item.poster?.number ?? ''}
-                        {item.poster?.city?.name ? ` · ${item.poster.city.name}` : ''}
+                        {item.poster?.city?.name ?? ''}
                       </div>
                     </div>
                     {item.downloadToken ? (

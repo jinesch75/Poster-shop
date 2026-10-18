@@ -1115,10 +1115,6 @@
   border-radius: 2px;
 }
 
-.admin-rename__num {
-  width: 90px;
-}
-
 .admin-rename__slug {
   display: flex;
   align-items: center;
@@ -1138,21 +1134,4 @@
 .admin-rename__issues {
   margin: 8px 0 0;
   padding-left: 18px;
-}
-
-.admin-rename__bar {
-  gap: 16px;
-  align-items: center;
-}
-
-.admin-rename__renumber {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-right: auto;
-}
-
-.admin-rename__table input.admin-rename__changed {
-  border-color: var(--accent-deep);
-  background: var(--paper-warm);
 }

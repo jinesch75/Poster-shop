@@ -12,7 +12,6 @@ import { publicUrl } from '@/lib/storage';
 export type CartLineView = {
   slug: string;
   title: string;
-  number: string;
   cityName: string;
   /** Watermarked preview image URL — never the master. */
   previewFile: string;
@@ -51,7 +50,6 @@ export async function getCartPreviews(
     out.push({
       slug: r.slug,
       title: r.title,
-      number: r.number,
       cityName: r.city.name,
       previewFile: publicUrl(previewKey),
       priceEur: Math.round(r.priceDigitalCents / 100),

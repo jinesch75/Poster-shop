@@ -34,7 +34,7 @@ export default async function AdminOrderDetail({
       items: {
         include: {
           poster: {
-            select: { title: true, number: true, city: { select: { name: true } } },
+            select: { title: true, city: { select: { name: true } } },
           },
         },
       },
@@ -98,8 +98,7 @@ export default async function AdminOrderDetail({
                 <td>
                   {item.poster?.title ?? 'Poster'}
                   <div className="admin-muted" style={{ fontSize: 12 }}>
-                    {item.poster?.number}
-                    {item.poster?.city?.name ? ` · ${item.poster.city.name}` : ''}
+                    {item.poster?.city?.name ?? ''}
                   </div>
                 </td>
                 <td>€{(item.priceCents / 100).toFixed(2)}</td>

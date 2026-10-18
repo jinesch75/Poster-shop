@@ -11,18 +11,18 @@
 import { prisma } from './prisma';
 import { slugify } from './slug';
 
-export type RenameRow = { id: string; title: string; number: string; slug: string };
+export type RenameRow = { id: string; title: string; slug: string };
 export type RenameIssue = { title: string; message: string };
 export type RenameResult = { saved: number; moved: number; issues: RenameIssue[] };
 
 export async function applyRenames(rows: RenameRow[]): Promise<RenameResult> {
   const posters = await prisma.poster.findMany({
-    select: { id: true, slug: true, title: true, number: true },
+    select: { id: true, slug: true, title: true },
   });
   const byId = new Map(rows.map((r) => [r.id, r]));
 
   const issues: RenameIssue[] = [];
-  type Change = { id: string; oldSlug: string; title: string; number: string; slug: string };
+  type Change = { id: string; oldSlug: string; title: string; slug: string };
   const changes: Change[] = [];
 
   // Pass 1: each row's own fields.
@@ -30,7 +30,6 @@ export async function applyRenames(rows: RenameRow[]): Promise<RenameResult> {
     const row = byId.get(p.id);
     if (!row) continue; // poster wasn't on the page (e.g. uploaded meanwhile)
     const title = row.title.trim();
-    const number = row.number.trim();
     let slug = slugify(row.slug);
 
     if (!title) {
@@ -41,8 +40,8 @@ export async function applyRenames(rows: RenameRow[]): Promise<RenameResult> {
       issues.push({ title, message: 'Web address can’t be empty — kept the old one.' });
       slug = p.slug;
     }
-    if (title === p.title && number === p.number && slug === p.slug) continue;
-    changes.push({ id: p.id, oldSlug: p.slug, title, number, slug });
+    if (title === p.title && slug === p.slug) continue;
+    changes.push({ id: p.id, oldSlug: p.slug, title, slug });
   }
 
   // Pass 2: web addresses must be unique across ALL posters' final values.
@@ -70,7 +69,7 @@ export async function applyRenames(rows: RenameRow[]): Promise<RenameResult> {
   const original = new Map(posters.map((p) => [p.id, p]));
   const effective = changes.filter((c) => {
     const p = original.get(c.id)!;
-    return c.title !== p.title || c.number !== p.number || c.slug !== p.slug;
+    return c.title !== p.title || c.slug !== p.slug;
   });
   changes.length = 0;
   changes.push(...effective);
@@ -89,7 +88,7 @@ export async function applyRenames(rows: RenameRow[]): Promise<RenameResult> {
     for (const c of changes) {
       await tx.poster.update({
         where: { id: c.id },
-        data: { title: c.title, number: c.number, slug: c.slug },
+        data: { title: c.title, slug: c.slug },
       });
     }
     for (const c of slugChanges) {

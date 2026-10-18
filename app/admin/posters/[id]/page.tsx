@@ -26,7 +26,6 @@ async function updatePoster(id: string, formData: FormData) {
     where: { id },
     data: {
       title: String(formData.get('title') ?? ''),
-      number: String(formData.get('number') ?? ''),
       description: String(formData.get('description') ?? ''),
       cityId: String(formData.get('cityId') ?? ''),
       priceDigitalCents: Math.round(Number(formData.get('priceEur') ?? 5) * 100),
@@ -180,7 +179,7 @@ export default async function AdminPosterEdit({
           </p>
           <h1>{poster.title}</h1>
           <p className="admin-page__sub">
-            {poster.city.name} · {poster.number}
+            {poster.city.name}
           </p>
         </div>
       </header>
@@ -274,16 +273,10 @@ export default async function AdminPosterEdit({
 
         <section className="admin-split__form">
           <form action={update} className="admin-form">
-            <div className="admin-form__row">
-              <label>
-                <span>Title</span>
-                <input name="title" type="text" defaultValue={poster.title} required />
-              </label>
-              <label>
-                <span>Number</span>
-                <input name="number" type="text" defaultValue={poster.number} />
-              </label>
-            </div>
+            <label>
+              <span>Title</span>
+              <input name="title" type="text" defaultValue={poster.title} required />
+            </label>
             <label>
               <span>Description</span>
               <textarea name="description" rows={3} defaultValue={poster.description} required />

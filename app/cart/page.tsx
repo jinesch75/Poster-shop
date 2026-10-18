@@ -166,7 +166,7 @@ function CartContents() {
                         {line.title}
                       </Link>
                       <div className="cart-row__meta">
-                        {line.number} · {line.cityName}
+                        {line.cityName}
                       </div>
                       <button
                         type="button"

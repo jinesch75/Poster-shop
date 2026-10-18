@@ -5,7 +5,6 @@ import { z } from 'zod';
 
 export const PosterUploadSchema = z.object({
   title: z.string().trim().min(2, 'Title must be at least 2 characters').max(120, 'Title must be 120 characters or fewer'),
-  number: z.string().trim().min(1).max(10).default('N°?'),
   description: z.string().trim().min(1, 'Description is required').max(800, 'Description must be 800 characters or fewer'),
   cityId: z.string().min(1, 'City is required'),
   priceEur: z.coerce.number().int().min(1, 'Price must be at least €1').max(500, 'Price must be €500 or less').default(5),

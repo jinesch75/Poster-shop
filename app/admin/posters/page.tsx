@@ -152,7 +152,7 @@ export default async function AdminPostersList({
                     </span>
                   </div>
                   <div className="admin-card__sub">
-                    {p.city.name} · {p.number} · €
+                    {p.city.name} · €
                     {(p.priceDigitalCents / 100).toFixed(2)}
                   </div>
                   <div className="admin-card__sub">

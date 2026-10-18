@@ -1,6 +1,6 @@
 // Rename all posters in one go.
 //
-// One table, one row per poster: title, number and web address (slug) are
+// One table, one row per poster: title and web address (slug) are
 // editable inline, and a single Save applies every change. Rows that fail
 // validation (empty title, malformed or duplicate address) are skipped and
 // reported; every other row is saved, so a typo in one row never throws
@@ -18,7 +18,6 @@ import { publicUrl } from '@/lib/storage';
 import { revalidatePosterPages } from '@/lib/revalidate';
 import { applyRenames, type RenameIssue, type RenameRow } from '@/lib/rename';
 import { catalogueOrder } from '@/lib/poster-order';
-import { RenumberButton } from './RenumberButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +33,6 @@ async function saveAll(formData: FormData): Promise<void> {
     rows.push({
       id,
       title: String(value),
-      number: String(formData.get(`number_${id}`) ?? ''),
       slug: String(formData.get(`slug_${id}`) ?? ''),
     });
   }
@@ -71,7 +69,6 @@ export default async function RenamePostersPage({
         id: true,
         slug: true,
         title: true,
-        number: true,
         status: true,
         gallery: true,
         thumbnailKey: true,
@@ -89,7 +86,7 @@ export default async function RenamePostersPage({
         </p>
         <h1>Rename all</h1>
         <p className="admin-page__sub">
-          Edit titles, numbers and web addresses below, then press Save once.
+          Edit titles and web addresses below, then press Save once.
           Changing a web address keeps the old one working: it redirects to the
           new page. Rows are in catalogue order — live posters (main gallery,
           then Mondrian, city by city), then drafts.
@@ -119,7 +116,6 @@ export default async function RenamePostersPage({
 
       <form id="rename-form" action={saveAll} className="admin-form admin-rename">
         <div className="admin-rename__bar">
-          <RenumberButton formId="rename-form" total={posters.length} />
           <button type="submit" className="admin-btn-primary">
             Save all changes
           </button>
@@ -130,7 +126,6 @@ export default async function RenamePostersPage({
             <tr>
               <th aria-label="Thumbnail" />
               <th>Title</th>
-              <th>No.</th>
               <th>Web address</th>
               <th>City · gallery</th>
             </tr>
@@ -152,15 +147,6 @@ export default async function RenamePostersPage({
                       defaultValue={p.title}
                       aria-label={`Title for ${p.title}`}
                       required
-                    />
-                  </td>
-                  <td className="admin-rename__num">
-                    <input
-                      type="text"
-                      name={`number_${p.id}`}
-                      data-number-field
-                      defaultValue={p.number}
-                      aria-label={`Number for ${p.title}`}
                     />
                   </td>
                   <td>

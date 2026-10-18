@@ -64,7 +64,7 @@ async function runBackfill(): Promise<void> {
 
   const posters = await prisma.poster.findMany({
     select: { id: true, slug: true, masterKey: true },
-    orderBy: { number: 'asc' },
+    orderBy: { title: 'asc' },
   });
 
   const results: RowResult[] = [];
@@ -130,7 +130,7 @@ async function runRegenerate(): Promise<void> {
   // them. Master itself is untouched.
   const posters = await prisma.poster.findMany({
     select: { id: true, slug: true, masterKey: true },
-    orderBy: { number: 'asc' },
+    orderBy: { title: 'asc' },
   });
 
   const results: RowResult[] = [];

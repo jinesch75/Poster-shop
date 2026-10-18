@@ -50,20 +50,6 @@ function deriveTitle(fileName: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-async function nextPosterNumber(): Promise<string> {
-  // Find the largest existing N°NN and add 1, matching the seeded
-  // numbering convention.
-  const all = await prisma.poster.findMany({ select: { number: true } });
-  let max = 0;
-  for (const { number } of all) {
-    const m = number.match(/(\d+)/);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n > max) max = n;
-    }
-  }
-  return `N°${String(max + 1).padStart(2, '0')}`;
-}
 
 export async function runQuickUpload(formData: FormData): Promise<void> {
   const cityId = String(formData.get('cityId') ?? '');
@@ -127,12 +113,10 @@ export async function runQuickUpload(formData: FormData): Promise<void> {
       const buffer = Buffer.from(await file.arrayBuffer());
       const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
       const derivatives = await processMaster(buffer, ext);
-      const number = await nextPosterNumber();
       const created = await prisma.poster.create({
         data: {
           slug: posterSlug,
           title: deriveTitle(file.name),
-          number,
           description:
             DEFAULT_DESCRIPTION_BY_CITY[citySlug] ??
             'Architectural line drawings and primary blocks.',

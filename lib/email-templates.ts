@@ -8,7 +8,6 @@
 
 export type ReceiptItem = {
   title: string;
-  number: string;
   cityName?: string | null;
   downloadUrl: string; // absolute URL to /api/download/{token}
 };
@@ -37,7 +36,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
         <td style="padding:16px 0;border-bottom:1px solid #ece7df;vertical-align:top;">
           <div style="font-family:Georgia,'Times New Roman',serif;font-size:16px;color:#2a2724;">${esc(it.title)}</div>
           <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:#86807a;letter-spacing:0.04em;margin-top:4px;">
-            ${esc(it.number)}${it.cityName ? ` &middot; ${esc(it.cityName)}` : ''}
+            ${it.cityName ? esc(it.cityName) : ''}
           </div>
         </td>
         <td style="padding:16px 0;border-bottom:1px solid #ece7df;vertical-align:top;text-align:right;">
@@ -120,7 +119,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
     `Links are active for 48 hours, up to 5 downloads each.`,
     ``,
     ...data.items.flatMap((it) => [
-      `— ${it.title} (${it.number}${it.cityName ? `, ${it.cityName}` : ''})`,
+      `— ${it.title}${it.cityName ? ` (${it.cityName})` : ''}`,
       `  ${it.downloadUrl}`,
       ``,
     ]),

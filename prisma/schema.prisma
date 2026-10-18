@@ -38,7 +38,6 @@ model Poster {
   id              String        @id @default(cuid())
   slug            String        @unique
   title           String
-  number          String        // "N°01"
   description     String
   landmarkType    String?       // "tower", "bridge", "street furniture", ...
   orientation     Orientation   @default(PORTRAIT)

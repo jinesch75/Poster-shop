@@ -19,7 +19,6 @@ export type SiblingCandidate = {
   id: string;
   cityId: string;
   gallery: Gallery;
-  number: string;
   previewKey: string | null;
   thumbnailKey: string | null;
   masterKey: string;
@@ -99,13 +98,12 @@ export async function getSiblingPairsForPoster(
       id: true,
       cityId: true,
       gallery: true,
-      number: true,
       previewKey: true,
       thumbnailKey: true,
       masterKey: true,
     },
     // Stable ordering keeps pairs deterministic across reruns.
-    orderBy: [{ cityId: 'asc' }, { number: 'asc' }],
+    orderBy: [{ cityId: 'asc' }, { createdAt: 'asc' }],
   });
 
   return selectSiblingPairs(target, candidates as SiblingCandidate[]);

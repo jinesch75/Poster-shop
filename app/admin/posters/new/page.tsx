@@ -21,7 +21,6 @@ async function createPoster(formData: FormData) {
 
   const parsed = PosterUploadSchema.safeParse({
     title: formData.get('title'),
-    number: formData.get('number') || undefined,
     description: formData.get('description'),
     cityId: formData.get('cityId'),
     priceEur: formData.get('priceEur'),
@@ -46,7 +45,7 @@ async function createPoster(formData: FormData) {
     failWith('Only PNG or JPEG master files are accepted.');
   }
 
-  const { title, number, description, cityId, priceEur, publish, landmarkType, gallery } =
+  const { title, description, cityId, priceEur, publish, landmarkType, gallery } =
     parsed.data;
 
   const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
@@ -77,7 +76,6 @@ async function createPoster(formData: FormData) {
       data: {
         slug,
         title,
-        number,
         description,
         cityId,
         landmarkType,
@@ -155,10 +153,6 @@ export default async function AdminNewPosterPage({
           <label>
             <span>Title</span>
             <input name="title" type="text" required />
-          </label>
-          <label>
-            <span>Number</span>
-            <input name="number" type="text" placeholder="N°09" />
           </label>
         </div>
 
