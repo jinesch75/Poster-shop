@@ -5,6 +5,9 @@ import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { BuyRow } from '@/components/BuyRow';
 import { LivingRoomMockupRandom } from '@/components/LivingRoomMockupRandom';
+import { IdeasStrip } from '@/components/IdeasStrip';
+import { getIdeas } from '@/lib/ideas';
+import Link from 'next/link';
 import {
   getPosterBySlug,
   getPublishedPosterSlugs,
@@ -57,7 +60,10 @@ export default async function ProductPage({
     notFound();
   }
 
-  const related = await getRelatedPosters(poster, 3);
+  const [related, ideas] = await Promise.all([
+    getRelatedPosters(poster, 3),
+    getIdeas(poster.slug, poster.id),
+  ]);
   const printSize = largestSharpPrintSize(
     poster.masterWidthPx,
     poster.masterHeightPx,
@@ -173,6 +179,25 @@ export default async function ProductPage({
             </p>
           </div>
         </div>
+
+        {ideas.length > 0 && (
+          <section className="ideas" aria-labelledby="ideas-heading">
+            <div className="related-header" id="ideas-heading">
+              What you can do with your file
+            </div>
+            <p className="ideas__lede">
+              Your download is a full-resolution file, so it can do far more than
+              hang on a wall. A few ideas, all fine for personal use and gifts
+              under the <Link href="/legal/licence">licence</Link>:
+            </p>
+            <IdeasStrip ideas={ideas} posterTitle={poster.title} />
+            <p className="ideas__note">
+              Illustrations of possible uses. Mugs, t-shirts, totes, puzzles and
+              the like come from any print shop or print-on-demand service you
+              choose — Gridline Cities sells the digital file only.
+            </p>
+          </section>
+        )}
 
         {related.length > 0 && (
           <>

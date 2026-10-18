@@ -16,13 +16,19 @@ export default function LicencePage() {
       eyebrow="Licence"
       title="Personal-use licence"
       lede="When you buy a poster you receive a licence to use the file. The licence is generous for personal use and narrow for commercial use. Here&rsquo;s the full scope."
-      lastUpdated="23 April 2026"
+      lastUpdated="18 October 2026"
     >
       <h2>You may</h2>
       <ul>
         <li>print the poster for your own home, for a gift, or for your personal workspace;</li>
         <li>print it as many times as you like, on any paper, at any size;</li>
         <li>use a local print shop or a print-on-demand service to produce your own copies;</li>
+        <li>use it as a wallpaper on your own phone, tablet or computer;</li>
+        <li>
+          have it printed on personal items &mdash; a mug, a t-shirt, a tote bag, a
+          puzzle, a calendar, postcards, a notebook cover &mdash; for yourself or as a
+          gift, as long as they are not sold;
+        </li>
         <li>keep the file indefinitely &mdash; the licence doesn&rsquo;t expire.</li>
       </ul>
 
