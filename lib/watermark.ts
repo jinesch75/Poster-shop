@@ -11,9 +11,13 @@
 // thumbnail is even smaller (500px) for grid display.
 //
 // On top of that, the public preview and thumbnail are visibly marked
-// with a faint diagonal "GRIDLINE · CITIES" band and "Gridline Cities" in
-// the bottom-right corner (restored 2026-10-17; the QR badge that briefly
-// came back with it was dropped again 2026-10-18).
+// with a faint diagonal "GRIDLINE · CITIES" band and "gridlinecities.com"
+// in the bottom-right corner (restored 2026-10-17; the QR badge that
+// briefly came back with it was dropped again 2026-10-18).
+//
+// Purchased downloads carry only the small "gridlinecities.com" credit in
+// the bottom-right corner — see stampDownloadCredit(). The master on disk
+// stays clean; the credit is added on the fly in the download route.
 // Mockups are composited from the marked preview, so they carry it too.
 // Masters are never marked.
 //
@@ -35,7 +39,7 @@ import { promises as fs } from 'fs';
 import { putBuffer, readBuffer } from './storage';
 import { prisma } from './prisma';
 import { getSiblingPairsForPoster } from './mockup-siblings';
-import { CORNER_TEXT, DIAGONAL_TEXT, GLYPH_UNITS } from './watermark-glyphs';
+import { DIAGONAL_TEXT, GLYPH_UNITS, SITE_TEXT } from './watermark-glyphs';
 
 // ---------- sharp memory tuning ----------
 //
@@ -194,20 +198,52 @@ function diagonalWordmarkSvg(width: number, height: number): string {
 }
 
 /**
- * "Gridline Cities" in the bottom-right corner — same two-weight wordmark as
- * the site header.
+ * "gridlinecities.com" in the bottom-right corner.
+ *
+ * @param sizeFraction font size as a fraction of the image's shorter side
+ * @param opacity      fill opacity of the text
  */
-function cornerWordmarkSvg(width: number, height: number): string {
-  const fontSize = Math.min(width, height) * 0.022;
+function siteCreditSvg(
+  width: number,
+  height: number,
+  sizeFraction: number,
+  opacity: number,
+): string {
+  const fontSize = Math.min(width, height) * sizeFraction;
   const scale = fontSize / GLYPH_UNITS;
-  const x = width - width * 0.035 - CORNER_TEXT.width * scale;
+  const x = width - width * 0.035 - SITE_TEXT.width * scale;
   const y = height - height * 0.03;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <g fill="#1a1a1a" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${scale.toFixed(4)})">
-    <path d="${CORNER_TEXT.boldD}" fill-opacity="0.55"/>
-    <path d="${CORNER_TEXT.lightD}" fill-opacity="0.35"/>
-  </g>
+  <path fill="#1a1a1a" fill-opacity="${opacity}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${scale.toFixed(4)})" d="${SITE_TEXT.d}"/>
 </svg>`;
+}
+
+/** Corner credit on public previews and thumbnails. */
+function cornerWordmarkSvg(width: number, height: number): string {
+  return siteCreditSvg(width, height, 0.022, 0.5);
+}
+
+/**
+ * Add the small "gridlinecities.com" credit to a purchased master, at
+ * download time. Smaller and quieter than the preview mark — a signature,
+ * not a watermark — and nothing else is added. Output keeps the master's
+ * format: PNG stays lossless, JPEG is re-encoded at high quality.
+ */
+export async function stampDownloadCredit(
+  masterBuffer: Buffer,
+  ext: string,
+): Promise<Buffer> {
+  const meta = await sharp(masterBuffer).metadata();
+  const width = meta.width ?? 0;
+  const height = meta.height ?? 0;
+  if (!width || !height) return masterBuffer;
+
+  const img = sharp(masterBuffer).composite([
+    { input: Buffer.from(siteCreditSvg(width, height, 0.012, 0.45)), top: 0, left: 0 },
+  ]);
+  return ext === '.jpg' || ext === '.jpeg'
+    ? img.jpeg({ quality: 95, mozjpeg: true }).toBuffer()
+    : img.png({ compressionLevel: 9 }).toBuffer();
 }
 
 // ---------- Mockup composition ----------

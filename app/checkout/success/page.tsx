@@ -89,7 +89,9 @@ export default async function CheckoutSuccessPage({
                 Ready to download<span className="italic">.</span>
               </h2>
               <p className="aside">
-                Your files are clean, unmarked, and yours to print. Links
+                Your files are full resolution, free of the preview watermark
+                (just a small gridlinecities.com credit in the corner), and
+                yours to print. Links
                 below expire 48 hours after purchase and allow up to five
                 downloads each.
               </p>

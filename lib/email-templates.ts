@@ -76,7 +76,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
             </tr>
             <tr>
               <td style="padding-bottom:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;color:#4a4540;line-height:1.6;">
-                Thank you for the order. Your files are clean, unmarked, and yours to print. The links below are active for <strong>48 hours</strong> and allow up to <strong>5 downloads</strong> each &mdash; please save the files locally.
+                Thank you for the order. Your files are full resolution, free of the preview watermark (just a small gridlinecities.com credit in the corner), and yours to print. The links below are active for <strong>48 hours</strong> and allow up to <strong>5 downloads</strong> each &mdash; please save the files locally.
               </td>
             </tr>
             <tr>
@@ -116,7 +116,7 @@ export function renderReceipt(data: ReceiptEmail): { html: string; text: string 
     ``,
     `Your poster${data.items.length > 1 ? 's are' : ' is'} ready to download.`,
     ``,
-    `Files are clean, unmarked, and yours to print.`,
+    `Files are full resolution, free of the preview watermark (just a small gridlinecities.com credit in the corner), and yours to print.`,
     `Links are active for 48 hours, up to 5 downloads each.`,
     ``,
     ...data.items.flatMap((it) => [

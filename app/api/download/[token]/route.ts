@@ -5,9 +5,11 @@
 //   - downloadExpiresAt  48h from checkout; epoch-zero means "revoked"
 //   - downloadCount      5-download limit — incremented atomically
 //
-// On a valid request we stream the master file back. Masters are
-// otherwise blocked by /api/storage/[...key] — this route is the only
-// way a master reaches a buyer.
+// On a valid request we send the master file back, with the small
+// "gridlinecities.com" credit stamped in the bottom-right corner (the
+// master on disk stays clean). Masters are otherwise blocked by
+// /api/storage/[...key] — this route is the only way a master reaches a
+// buyer.
 //
 // Runtime: nodejs (we rely on fs streaming + crypto).
 
@@ -16,6 +18,7 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { readBuffer } from '@/lib/storage';
+import { stampDownloadCredit } from '@/lib/watermark';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -82,6 +85,13 @@ export async function GET(
       { error: 'Master file is unavailable' },
       { status: 500 },
     );
+  }
+  try {
+    buffer = await stampDownloadCredit(buffer, ext);
+  } catch (err) {
+    // Never block a paid download over the credit — fall back to the
+    // clean master and log it.
+    console.error('[download] credit stamp failed for key', key, err);
   }
 
   // Atomic increment with a guard on the current count — prevents two
