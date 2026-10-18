@@ -1135,3 +1135,9 @@
   margin: 8px 0 0;
   padding-left: 18px;
 }
+
+.admin-page__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}

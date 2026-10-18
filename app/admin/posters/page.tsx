@@ -70,9 +70,15 @@ export default async function AdminPostersList({
             and publish.
           </p>
         </div>
-        <Link href="/admin/posters/new" className="admin-btn-ghost">
-          + Upload (full metadata)
-        </Link>
+        <div className="admin-page__actions">
+          {/* Plain <a>, not <Link>: this is a file download, not a page. */}
+          <a href="/admin/export/originals" className="admin-btn-ghost" download>
+            Download all originals (.zip)
+          </a>
+          <Link href="/admin/posters/new" className="admin-btn-ghost">
+            + Upload (full metadata)
+          </Link>
+        </div>
       </header>
 
       <section className="admin-card admin-card--upload">
