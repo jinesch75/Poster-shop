@@ -1514,12 +1514,22 @@ nav .right .cart:hover .cart-label {
 }
 
 /* --------- Product: "What you can do with your file" --------- */
+/* Sits between the image row and the cart, at the same 80% width as the
+   image row. 13 examples: the first is a 2×2 lead tile, the other 12 fill
+   the rest, so 4 columns (desktop) and 2 columns (mobile) both come out
+   as complete rows. */
 .ideas {
-  margin-bottom: clamp(16px, 3vw, 40px);
+  max-width: 80%;
+  margin: 0 auto clamp(48px, 6vw, 80px);
 }
-.ideas .related-header {
-  margin-top: clamp(40px, 5vw, 72px);
-  margin-bottom: 12px;
+.ideas__heading {
+  margin: 0 0 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
 }
 .ideas__lede {
   max-width: 640px;
@@ -1533,25 +1543,26 @@ nav .right .cart:hover .cart-label {
   color: var(--ink);
   border-bottom: 1px solid var(--rule-strong);
 }
-.ideas__strip {
+.ideas__grid {
   list-style: none;
   margin: 0;
-  padding: 4px 2px 18px;
+  padding: 0;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: clamp(220px, 24vw, 300px);
-  gap: clamp(14px, 1.6vw, 22px);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
-  scrollbar-color: var(--rule-strong) transparent;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(10px, 1.2vw, 18px);
 }
 .ideas__item {
-  scroll-snap-align: start;
+  min-width: 0;
+}
+.ideas__item--lead {
+  grid-column: span 2;
+  grid-row: span 2;
 }
 .ideas__thumb {
+  position: relative;
   display: block;
   width: 100%;
+  height: 100%;
   padding: 0;
   border: 1px solid var(--rule);
   background: var(--paper-warm);
@@ -1570,10 +1581,35 @@ nav .right .cart:hover .cart-label {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+}
+/* Title chip inside the picture, bottom-left. */
+.ideas__label {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 16px);
+  padding: 4px 8px;
+  background: rgba(250, 248, 243, 0.92);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.ideas__item--lead .ideas__label {
+  left: 12px;
+  bottom: 12px;
+  padding: 6px 12px;
+  font-size: 16px;
 }
 .ideas__title {
-  margin: 12px 0 2px;
+  margin: 0;
   font-family: var(--display);
   font-size: 15px;
   font-weight: 500;
@@ -1585,9 +1621,23 @@ nav .right .cart:hover .cart-label {
   line-height: 1.45;
   color: var(--mute);
 }
+@media (max-width: 900px) {
+  .ideas {
+    max-width: none;
+  }
+  .ideas__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ideas__label {
+    left: 6px;
+    bottom: 6px;
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}
 .ideas__note {
   max-width: 640px;
-  margin: 10px 0 0;
+  margin: 14px 0 0;
   font-size: 12px;
   line-height: 1.55;
   color: var(--mute);

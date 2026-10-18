@@ -5,7 +5,7 @@ import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { BuyRow } from '@/components/BuyRow';
 import { LivingRoomMockupRandom } from '@/components/LivingRoomMockupRandom';
-import { IdeasStrip } from '@/components/IdeasStrip';
+import { IdeasGrid } from '@/components/IdeasGrid';
 import { getIdeas } from '@/lib/ideas';
 import Link from 'next/link';
 import {
@@ -143,6 +143,28 @@ export default async function ProductPage({
           </div>
         </div>
 
+        {/* Example uses of the digital file, shown before the price and
+            buttons so shoppers see what they're buying into. Same 80%
+            width as the image row above. */}
+        {ideas.length > 0 && (
+          <section className="ideas" aria-labelledby="ideas-heading">
+            <h3 className="ideas__heading" id="ideas-heading">
+              What you can do with your file
+            </h3>
+            <p className="ideas__lede">
+              Your download is a full-resolution file, so it can do far more than
+              hang on a wall. A few ideas, all fine for personal use and gifts
+              under the <Link href="/legal/licence">licence</Link>:
+            </p>
+            <IdeasGrid ideas={ideas} posterTitle={poster.title} />
+            <p className="ideas__note">
+              Illustrations of possible uses. Mugs, t-shirts, totes, puzzles and
+              the like come from any print shop or print-on-demand service you
+              choose — Gridline Cities sells the digital file only.
+            </p>
+          </section>
+        )}
+
         {/* Centered cart block — capped at ~600px so the price, buttons
             and helper text feel like a deliberate focal point under the
             gallery row rather than spanning the full content width. */}
@@ -179,25 +201,6 @@ export default async function ProductPage({
             </p>
           </div>
         </div>
-
-        {ideas.length > 0 && (
-          <section className="ideas" aria-labelledby="ideas-heading">
-            <div className="related-header" id="ideas-heading">
-              What you can do with your file
-            </div>
-            <p className="ideas__lede">
-              Your download is a full-resolution file, so it can do far more than
-              hang on a wall. A few ideas, all fine for personal use and gifts
-              under the <Link href="/legal/licence">licence</Link>:
-            </p>
-            <IdeasStrip ideas={ideas} posterTitle={poster.title} />
-            <p className="ideas__note">
-              Illustrations of possible uses. Mugs, t-shirts, totes, puzzles and
-              the like come from any print shop or print-on-demand service you
-              choose — Gridline Cities sells the digital file only.
-            </p>
-          </section>
-        )}
 
         {related.length > 0 && (
           <>

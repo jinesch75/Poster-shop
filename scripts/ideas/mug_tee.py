@@ -39,15 +39,29 @@ def soft_shadow(canvas, mask, offset, blur, strength):
     return canvas * (1 - m[..., None] * np.array([0.78, 0.80, 0.84]))
 
 
+def edge_color(img):
+    """Median colour of a thin ring around the image: the poster's own paper tone."""
+    a = np.asarray(img.convert('RGB'))
+    ring = np.concatenate([a[:6].reshape(-1, 3), a[-6:].reshape(-1, 3),
+                           a[:, :6].reshape(-1, 3), a[:, -6:].reshape(-1, 3)])
+    return tuple(int(v) for v in np.median(ring, axis=0))
+
+
 def crop_aspect(img, aspect, cx=0.5, cy=0.5):
+    """Bring img to width/height = aspect WITHOUT cropping: the whole poster is
+    kept and centred, and the extra space is filled with the poster's own
+    background tone (as you'd do when setting a portrait image as a wallpaper).
+    cx / cy are kept for call-site compatibility and ignored."""
     w, h = img.size
+    if abs(w / h - aspect) < 0.005:
+        return img
     if w / h > aspect:
-        nw = int(h * aspect)
-        x0 = int(np.clip(cx * w - nw / 2, 0, w - nw))
-        return img.crop((x0, 0, x0 + nw, h))
-    nh = int(w / aspect)
-    y0 = int(np.clip(cy * h - nh / 2, 0, h - nh))
-    return img.crop((0, y0, w, y0 + nh))
+        nw, nh = w, int(round(w / aspect))
+    else:
+        nw, nh = int(round(h * aspect)), h
+    canvas = Image.new('RGB', (nw, nh), edge_color(img))
+    canvas.paste(img.convert('RGB'), ((nw - w) // 2, (nh - h) // 2))
+    return canvas
 
 
 def to_img(a):

@@ -64,16 +64,29 @@ def rounded_mask(size, box, radius):
     return m.resize(size, Image.LANCZOS)
 
 
+def edge_color(img):
+    """Median colour of a thin ring around the image: the poster's own paper tone."""
+    a = np.asarray(img.convert('RGB'))
+    ring = np.concatenate([a[:6].reshape(-1, 3), a[-6:].reshape(-1, 3),
+                           a[:, :6].reshape(-1, 3), a[:, -6:].reshape(-1, 3)])
+    return tuple(int(v) for v in np.median(ring, axis=0))
+
+
 def crop_aspect(img, aspect, cx=0.5, cy=0.5):
-    """Crop img to width/height = aspect around a focal point."""
+    """Bring img to width/height = aspect WITHOUT cropping: the whole poster is
+    kept and centred, and the extra space is filled with the poster's own
+    background tone (as you'd do when setting a portrait image as a wallpaper).
+    cx / cy are kept for call-site compatibility and ignored."""
     w, h = img.size
+    if abs(w / h - aspect) < 0.005:
+        return img
     if w / h > aspect:
-        nw = int(h * aspect)
-        x0 = int(np.clip(cx * w - nw / 2, 0, w - nw))
-        return img.crop((x0, 0, x0 + nw, h))
-    nh = int(w / aspect)
-    y0 = int(np.clip(cy * h - nh / 2, 0, h - nh))
-    return img.crop((0, y0, w, y0 + nh))
+        nw, nh = w, int(round(w / aspect))
+    else:
+        nw, nh = int(round(h * aspect)), h
+    canvas = Image.new('RGB', (nw, nh), edge_color(img))
+    canvas.paste(img.convert('RGB'), ((nw - w) // 2, (nh - h) // 2))
+    return canvas
 
 
 def font(name, size):
@@ -274,7 +287,7 @@ def bookmark():
     bg = Image.alpha_composite(bg, book)
 
     # bookmark: 5 x 18 cm strip from the poster, rounded corners
-    bw, bh = 250, 900
+    bw, bh = 320, 780
     strip = crop_aspect(art, bw / bh, cx=0.5).resize((bw, bh), Image.LANCZOS).convert('RGBA')
     m = rounded_mask((bw, bh), (0, 0, bw, bh), 16)
     hole = Image.new('L', (bw * SS, bh * SS), 255)
@@ -282,7 +295,7 @@ def bookmark():
     m = ImageChops.multiply(m, hole.resize((bw, bh), Image.LANCZOS))
     strip.putalpha(m)
     layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    bx, by = 690, 170
+    bx, by = 655, 210
     layer.paste(strip, (bx, by), strip)
 
     # tassel: thread loop + fringe in charcoal

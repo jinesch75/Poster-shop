@@ -1,15 +1,18 @@
 'use client';
 
-// "What you can do with your file" strip on the product page: a
-// horizontally scrolling row of example mockups. Clicking one opens it
-// large in a native <dialog>; arrow keys / buttons step through, Esc or
+// "What you can do with your file" grid on the product page. The first
+// example ("Print & frame") is a large 2×2 tile and the other twelve sit
+// around it, so 13 images fill a 4-column grid (desktop) or a 2-column
+// grid (mobile) without gaps. Each tile keeps the images' 4:3 shape and
+// carries its title inside the picture. Clicking a tile opens it large in a
+// native <dialog> with its hint; arrow keys / buttons step through, Esc or
 // a click outside closes.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ProtectedImage } from './ProtectedImage';
 import type { Idea } from '@/lib/ideas';
 
-export function IdeasStrip({ ideas, posterTitle }: { ideas: Idea[]; posterTitle: string }) {
+export function IdeasGrid({ ideas, posterTitle }: { ideas: Idea[]; posterTitle: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState<number | null>(null);
 
@@ -45,9 +48,9 @@ export function IdeasStrip({ ideas, posterTitle }: { ideas: Idea[]; posterTitle:
 
   return (
     <>
-      <ul className="ideas__strip">
+      <ul className="ideas__grid">
         {ideas.map((idea, i) => (
-          <li key={idea.key} className="ideas__item">
+          <li key={idea.key} className={i === 0 ? 'ideas__item ideas__item--lead' : 'ideas__item'}>
             <button
               type="button"
               className="ideas__thumb"
@@ -59,12 +62,15 @@ export function IdeasStrip({ ideas, posterTitle }: { ideas: Idea[]; posterTitle:
                 alt={`${posterTitle} as ${idea.title.toLowerCase()}`}
                 width={1200}
                 height={900}
-                sizes="(max-width: 700px) 70vw, 300px"
+                sizes={
+                  i === 0
+                    ? '(max-width: 900px) 92vw, 40vw'
+                    : '(max-width: 900px) 46vw, 20vw'
+                }
                 loading="lazy"
               />
+              <span className="ideas__label">{idea.title}</span>
             </button>
-            <p className="ideas__title">{idea.title}</p>
-            <p className="ideas__hint">{idea.hint}</p>
           </li>
         ))}
       </ul>
