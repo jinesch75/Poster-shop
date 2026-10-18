@@ -1,8 +1,9 @@
 // QR redirect endpoint.
 //
-// Every public preview carries a small QR code encoding /q/<slug>. Scans
-// land here and are sent on to the product page. Keeping this hop means
-// the destination can change later without re-stamping the preview files.
+// Previews carried a small QR code encoding /q/<slug> (April–May 2026 and
+// again 2026-10-17/18). New previews no longer do, but copies of the old
+// images are still out there, so scans keep landing here and are sent on to
+// the product page.
 // The middleware logs the hit like any page view, so scans show up in the
 // admin analytics under /q/<slug>.
 
