@@ -83,6 +83,7 @@ export async function reissueOrder(
   const recipient = order.customer?.email ?? order.guestEmail ?? null;
 
   let emailed = false;
+  let emailError: string | null = null;
   if (recipient) {
     try {
       const res = await sendReceiptEmail({
@@ -93,8 +94,10 @@ export async function reissueOrder(
         isReissue: true,
       });
       emailed = res.ok;
+      if (!res.ok) emailError = res.error;
     } catch (err) {
       console.error('[admin/orders] re-issue email threw', order.id, err);
+      emailError = err instanceof Error ? err.message : String(err);
     }
   }
 
@@ -105,7 +108,7 @@ export async function reissueOrder(
   const tail = recipient
     ? emailed
       ? ` Fresh links emailed to ${recipient}.`
-      : ` Couldn't send the email — copy the links manually.`
+      : ` Couldn't send the email${emailError ? ` (${emailError})` : ''} — copy the links manually.`
     : ' No customer email on file — copy the links manually.';
 
   return {
