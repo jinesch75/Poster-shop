@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { slugify } from '@/lib/slug';
 import { revalidatePosterPages } from '@/lib/revalidate';
 import { processMaster, refreshLivingRoomMockups } from '@/lib/watermark';
 import { PosterUploadSchema, firstError } from '@/lib/validation';
@@ -7,15 +8,6 @@ import { PosterUploadSchema, firstError } from '@/lib/validation';
 export const metadata = { title: 'Upload poster — Gridline Cities Admin' };
 export const dynamic = 'force-dynamic';
 
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .slice(0, 80);
-}
 
 // Redirects back to the form with an inline error message instead of
 // throwing — throwing in a server action shows the white-screen

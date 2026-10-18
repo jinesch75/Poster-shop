@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { ProtectedImage } from '@/components/ProtectedImage';
 import { PosterCard } from '@/components/PosterCard';
 import { Nav } from '@/components/Nav';
@@ -8,6 +8,7 @@ import { LivingRoomMockupRandom } from '@/components/LivingRoomMockupRandom';
 import {
   getPosterBySlug,
   getPublishedPosterSlugs,
+  getRenamedSlug,
   getRelatedPosters,
 } from '@/lib/posters';
 import { stripeConfigured } from '@/lib/stripe';
@@ -49,7 +50,12 @@ export default async function ProductPage({
 }) {
   const { slug } = await params;
   const poster = await getPosterBySlug(slug);
-  if (!poster) notFound();
+  if (!poster) {
+    // Renamed on /admin/posters/rename? Send old links to the new address.
+    const renamed = await getRenamedSlug(slug);
+    if (renamed) permanentRedirect(`/shop/${renamed}`);
+    notFound();
+  }
 
   const related = await getRelatedPosters(poster, 3);
   const printSize = largestSharpPrintSize(

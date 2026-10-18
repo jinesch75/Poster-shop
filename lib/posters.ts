@@ -156,6 +156,18 @@ export async function getPosterBySlug(slug: string): Promise<PosterView | null> 
   return row ? toPosterView(row) : null;
 }
 
+/**
+ * If `slug` is a web address a published poster used to have, return that
+ * poster's current slug (so the product page can redirect to it).
+ */
+export async function getRenamedSlug(slug: string): Promise<string | null> {
+  const row = await prisma.posterSlugRedirect.findUnique({
+    where: { oldSlug: slug },
+    select: { poster: { select: { slug: true, status: true } } },
+  });
+  return row && row.poster.status === 'PUBLISHED' ? row.poster.slug : null;
+}
+
 export async function getRelatedPosters(
   poster: PosterView,
   limit = 3,

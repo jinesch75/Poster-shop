@@ -248,6 +248,17 @@ async function main() {
     });
   }
 
+  // Posters are only seeded into an EMPTY catalog (a fresh dev database).
+  // This seed runs on every Railway deploy and matches posters by slug, so
+  // on the live database it would otherwise re-create any seeded poster
+  // that was deleted, or whose web address was changed on
+  // /admin/posters/rename, as a duplicate.
+  if ((await prisma.poster.count()) > 0) {
+    console.log('Posters already exist — skipping poster seed.');
+    console.log('Seed complete.');
+    return;
+  }
+
   const london = await prisma.city.findUniqueOrThrow({ where: { slug: 'london' } });
 
   console.log('Seeding London posters...');

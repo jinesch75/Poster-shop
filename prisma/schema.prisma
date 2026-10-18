@@ -73,12 +73,26 @@ model Poster {
   sizes           PosterSize[]  // v2: print sizes via Gelato
   orderItems      OrderItem[]
   bundleLinks     BundleItem[]
+  slugRedirects   PosterSlugRedirect[]
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   @@index([cityId, status])
   @@index([gallery, status])
+}
+
+// A web address a poster used to have. When a poster's slug is changed on
+// /admin/posters/rename, the old slug is recorded here so /shop/<old-slug>
+// (saved links, search results, QR codes on older previews) permanently
+// redirects to the poster's current page.
+model PosterSlugRedirect {
+  oldSlug   String   @id
+  poster    Poster   @relation(fields: [posterId], references: [id], onDelete: Cascade)
+  posterId  String
+  createdAt DateTime @default(now())
+
+  @@index([posterId])
 }
 
 enum Orientation {
