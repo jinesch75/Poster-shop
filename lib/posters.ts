@@ -9,6 +9,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { publicUrl } from '@/lib/storage';
+import { byPosterNumber } from '@/lib/poster-order';
 import type {
   Poster as PosterRow,
   City as CityRow,
@@ -145,6 +146,8 @@ export async function getPublishedPosters(
     include: { city: { select: { name: true, slug: true } } },
     orderBy: [{ city: { name: 'asc' } }, { number: 'asc' }],
   });
+  // Numbers are text; re-sort numerically so "N°9" comes before "N°10".
+  rows.sort((a, b) => a.city.name.localeCompare(b.city.name) || byPosterNumber(a, b));
   return rows.map(toPosterView);
 }
 
@@ -182,10 +185,8 @@ export async function getRelatedPosters(
       slug: { not: poster.slug },
     },
     include: { city: { select: { name: true, slug: true } } },
-    orderBy: { number: 'asc' },
-    take: limit,
   });
-  return rows.map(toPosterView);
+  return rows.sort(byPosterNumber).slice(0, limit).map(toPosterView);
 }
 
 /** Used by generateStaticParams on /shop/[slug] */
