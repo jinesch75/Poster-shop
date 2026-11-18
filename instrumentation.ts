@@ -1,29 +1,18 @@
 // Runs once per server process, before any request is handled.
 //
-// This is where sharp's libvips tuning HAS to live. It was previously set at
-// module load in lib/watermark.ts, on the assumption that watermark.ts is the
-// only runtime consumer of sharp. It isn't, and worse, Next.js loads route
-// modules lazily — on a production server that only ever serves public pages,
-// watermark.ts is never imported and those settings never executed.
+// This file is compiled for BOTH the Node and Edge runtimes (the Edge pass
+// exists because the project has a middleware.ts). sharp is a native module
+// and cannot be resolved for Edge — it pulls in fs, child_process and node:
+// scheme imports that the Edge compiler rejects.
 //
-// Next.js's own image optimizer requires sharp independently. It was running
-// with libvips' default 50 MB operation cache and a worker per CPU, which is
-// what held ~1.6 GB of native memory that the process never returned.
-//
-// cache(false) and concurrency() are process-global libvips settings, so
-// setting them here covers every sharp consumer: the optimizer, watermark.ts,
-// the seed, and any tsx script.
+// Next replaces process.env.NEXT_RUNTIME with a literal at build time, once
+// per compiler. Keeping the import INSIDE the branch means the Edge pass sees
+// `if ('edge' === 'nodejs')`, eliminates it as dead code, and never tries to
+// resolve sharp. A runtime early-return does not achieve this — the bundler
+// still has to resolve anything it can reach.
 
 export async function register() {
-  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
-
-  const sharp = (await import('sharp')).default;
-
-  // Our masters are 20–40 MB one-shot files, resized once and never touched
-  // again. The operation cache only pins native memory for us.
-  sharp.cache(false);
-
-  // CPU sits near 0% and the pipeline is sequential; extra libvips workers
-  // just carry extra tile buffers.
-  sharp.concurrency(1);
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./instrumentation-node');
+  }
 }
