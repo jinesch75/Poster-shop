@@ -1,0 +1,37 @@
+Add privacy-first analytics dashboard to admin panel
+
+Adds an /admin/analytics page showing visitor traffic, top pages,
+geography, referrers, and device/browser breakdown. Tracking happens
+server-side via middleware (no client JS, ad-blocker-proof, no cookies),
+and uses a daily-rotating salted hash of (IP + user-agent) instead of
+storing IPs — same pattern as Plausible/Fathom, GDPR-safe without a
+consent banner.
+
+Schema:
+- New PageView model (path, referrer host, country, device, browser, os,
+  daily session hash). Indexed by (createdAt) and (path, createdAt).
+  Railway will create it on next deploy via `prisma db push` (already
+  in the start script).
+
+Tracking:
+- middleware.ts fires a fire-and-forget POST to /api/track on every
+  public, non-prefetch GET. Excludes /admin, /api, /_next, static
+  assets, well-known files.
+- /api/track (Node runtime) parses UA, looks up country via
+  api.country.is (free, no key, ~1.5s timeout, fails to null), hashes
+  session, writes the row. Geo cache is in-memory, 1h TTL.
+
+Admin:
+- New "Analytics" link in sidebar.
+- "Visitors (7d)" tile added to the overview dashboard.
+- /admin/analytics page with 24h/7d/30d/90d range selector, daily
+  traffic SVG chart (page views + unique visitors), and ranked tables
+  for pages, countries, referrers, devices, browsers.
+
+To deploy:
+- Commit + push. Railway runs `prisma db push --accept-data-loss` on
+  start, which will create the PageView table automatically.
+- No env-var changes needed.
+
+Untouched: package-lock.json shows pre-existing qrcode-package
+removals from a prior cleanup — separate commit recommended.

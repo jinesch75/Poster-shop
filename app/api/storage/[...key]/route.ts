@@ -3,9 +3,10 @@
 // gating for master files (purchasers only).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
+import { promises as fs, createReadStream } from 'fs';
+import { Readable } from 'stream';
 import path from 'path';
-import { resolveKey, readBuffer } from '@/lib/storage';
+import { resolveKey } from '@/lib/storage';
 
 export const runtime = 'nodejs';
 
@@ -37,21 +38,25 @@ export async function GET(
 
   try {
     const filePath = resolveKey(key);
-    await fs.stat(filePath); // existence check
-    const buffer = await readBuffer(key);
+    const stat = await fs.stat(filePath); // existence check + Content-Length
     const ext = path.extname(key).toLowerCase();
     const mime = MIME[ext] ?? 'application/octet-stream';
-    // Newer @types/node types Buffer as Buffer<ArrayBufferLike>, which TS
-    // refuses to treat as BlobPart/BodyInit (both require an ArrayBuffer
-    // backing, not SharedArrayBuffer). Copy into a fresh Uint8Array — its
-    // backing store is a plain ArrayBuffer, which BodyInit accepts.
-    const bytes = new Uint8Array(buffer.byteLength);
-    bytes.set(buffer);
-    return new NextResponse(bytes, {
+
+    // Stream from disk rather than reading the whole file into a Buffer and
+    // then copying it into a second Uint8Array. The old version allocated
+    // every file twice per request; at a few hundred KB a time that is
+    // invisible per hit but fragments the native heap steadily, and the
+    // process never gave the memory back.
+    const body = Readable.toWeb(
+      createReadStream(filePath),
+    ) as unknown as ReadableStream<Uint8Array>;
+
+    return new NextResponse(body, {
       status: 200,
       headers: {
         'Content-Type': mime,
-        'Cache-Control': 'public, max-age=3600, immutable',
+        'Content-Length': String(stat.size),
+        'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch {

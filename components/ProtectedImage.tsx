@@ -17,6 +17,12 @@ export function ProtectedImage(props: Props) {
   return (
     <Image
       {...props}
+      // Previews and thumbnails are already generated at their final size
+      // and watermarked by lib/watermark.ts, and served with a long
+      // Cache-Control by /api/storage. Routing them through Next's image
+      // optimizer re-encodes finished work on every crawl — which is what
+      // was holding ~1.6 GB of native memory on the server.
+      unoptimized={props.unoptimized ?? true}
       draggable={false}
       onContextMenu={(e) => e.preventDefault()}
       style={{
